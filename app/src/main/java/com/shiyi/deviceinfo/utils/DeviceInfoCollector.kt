@@ -26,6 +26,13 @@ import java.util.Locale
 import java.util.Scanner
 
 class DeviceInfoCollector(private val context: Context) {
+    
+    /**
+     * 获取上下文对象
+     */
+    fun getContext(): Context {
+        return context
+    }
 
     fun collectDeviceInfo(): JSONObject {
         val deviceInfo = JSONObject()

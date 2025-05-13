@@ -3,10 +3,20 @@ package com.shiyi.deviceinfo.ui.screens
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.content.Intent
+import android.net.Uri
 import android.os.Environment
+import android.provider.DocumentsContract
+import android.util.Log
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.shiyi.deviceinfo.ui.components.IOSButton
 import com.shiyi.deviceinfo.ui.components.IOSCard
@@ -53,6 +65,11 @@ fun HomeScreen() {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     
+    // 保存文件夹路径状态
+    var selectedFolderUri by remember { mutableStateOf<Uri?>(null) }
+    var selectedFolderPath by remember { mutableStateOf<String?>(null) }
+    var showFolderSelection by remember { mutableStateOf(false) }
+    
     // Storage permission request
     val hasStoragePermission = remember {
         mutableStateOf(
@@ -67,13 +84,40 @@ fun HomeScreen() {
         )
     }
     
+    // 文件保存器 - 直接使用 ACTION_CREATE_DOCUMENT 意图
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            try {
+                Log.d("DeviceInfo", "Selected document URI: $uri")
+                // 直接保存到选定的 URI
+                saveDeviceInfoToUri(deviceInfoCollector, uri, snackbarHostState, scope)
+            } catch (e: Exception) {
+                Log.e("DeviceInfo", "Error saving document: ${e.message}", e)
+                scope.launch {
+                    snackbarHostState.showSnackbar("Error saving file: ${e.message}")
+                }
+            }
+        }
+    }
+    
+    // 文件保存器
+    val saveFileLauncher = rememberLauncherForActivityResult(
+        contract = CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            saveDeviceInfoToUri(deviceInfoCollector, uri, snackbarHostState, scope)
+        }
+    }
+    
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         hasStoragePermission.value = isGranted
         if (isGranted) {
-            // Permission granted, save the file
-            saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope)
+            // 权限获取后显示选择器
+            showFolderSelection = true
         } else {
             scope.launch {
                 snackbarHostState.showSnackbar("Storage permission is required to save the file")
@@ -329,24 +373,50 @@ fun HomeScreen() {
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Export button
+                // Export buttons
                 IOSButton(
-                    text = "Export as JSON",
+                    text = "Export to Downloads",
                     onClick = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             // For Android 11+, use the Storage Access Framework
-                            saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope)
+                            val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+                            saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope, downloadDir)
                         } else {
                             // For older Android versions, request permission if not granted
                             if (hasStoragePermission.value) {
-                                saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope)
+                                val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+                                saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope, downloadDir)
                             } else {
                                 permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             }
                         }
                     },
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
+                
+                IOSButton(
+                    text = "Choose Save Location",
+                    onClick = {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                            // For Android 11+, directly launch document creator
+                            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                            val suggestedName = "device_info_$timestamp.json"
+                            createDocumentLauncher.launch(suggestedName)
+                        } else {
+                            // For older Android versions, request permission if not granted
+                            if (hasStoragePermission.value) {
+                                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                                val suggestedName = "device_info_$timestamp.json"
+                                createDocumentLauncher.launch(suggestedName)
+                            } else {
+                                permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            }
+                        }
+                    },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                
+                // 已移除文件夹路径显示，因为我们现在使用文件选择器
                 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -357,15 +427,55 @@ fun HomeScreen() {
 private fun saveDeviceInfoToFile(
     deviceInfoCollector: DeviceInfoCollector,
     snackbarHostState: SnackbarHostState,
-    scope: kotlinx.coroutines.CoroutineScope
+    scope: kotlinx.coroutines.CoroutineScope,
+    directory: String? = null
 ) {
     try {
-        val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-        val filePath = deviceInfoCollector.saveDeviceInfoToFile(downloadDir)
+        // 使用指定的文件夹路径或默认的下载目录
+        val targetDir = directory ?: Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+        val filePath = deviceInfoCollector.saveDeviceInfoToFile(targetDir)
         scope.launch {
             snackbarHostState.showSnackbar("File saved to: $filePath")
         }
     } catch (e: Exception) {
+        scope.launch {
+            snackbarHostState.showSnackbar("Error saving file: ${e.message}")
+        }
+    }
+}
+
+/**
+ * 保存设备信息到指定的 URI
+ */
+private fun saveDeviceInfoToUri(
+    deviceInfoCollector: DeviceInfoCollector,
+    uri: Uri,
+    snackbarHostState: SnackbarHostState,
+    scope: kotlinx.coroutines.CoroutineScope,
+    filename: String? = null
+) {
+    try {
+        Log.d("DeviceInfo", "Saving to URI: $uri")
+        val context = deviceInfoCollector.getContext()
+        val deviceInfo = deviceInfoCollector.collectDeviceInfo()
+        
+        // 尝试打开输出流
+        val outputStream = context.contentResolver.openOutputStream(uri)
+        if (outputStream != null) {
+            outputStream.use { stream ->
+                val jsonString = deviceInfo.toString(4) // Pretty print with 4-space indentation
+                stream.write(jsonString.toByteArray())
+            }
+            
+            val displayName = filename ?: uri.lastPathSegment ?: "device_info.json"
+            scope.launch {
+                snackbarHostState.showSnackbar("File saved successfully: $displayName")
+            }
+        } else {
+            throw IOException("Could not open output stream for URI: $uri")
+        }
+    } catch (e: Exception) {
+        Log.e("DeviceInfo", "Error saving to URI: ${e.message}", e)
         scope.launch {
             snackbarHostState.showSnackbar("Error saving file: ${e.message}")
         }
