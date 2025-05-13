@@ -26,8 +26,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Divider
 import androidx.compose.material.icons.Icons
@@ -161,13 +161,15 @@ fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
+                .padding(horizontal = 16.dp),
+            state = rememberLazyListState(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
+        ) {            
+            item {
             deviceInfo?.let { info ->
                 // Device section
                 IOSGroupHeader(text = stringResource(id = R.string.group_device))
@@ -649,6 +651,7 @@ fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
                 }
                 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
             }
         }
     }
