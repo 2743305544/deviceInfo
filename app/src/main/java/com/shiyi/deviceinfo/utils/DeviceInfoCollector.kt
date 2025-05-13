@@ -34,470 +34,554 @@ class DeviceInfoCollector(private val context: Context) {
         return context
     }
 
+    /**
+     * 收集所有设备信息
+     */
     fun collectDeviceInfo(): JSONObject {
+        return collectDeviceInfo(null) // 默认收集所有信息
+    }
+    
+    /**
+     * 可选择的信息类别
+     */
+    companion object {
+        const val CATEGORY_BASIC = "basic"
+        const val CATEGORY_SYSTEM = "system"
+        const val CATEGORY_KERNEL = "kernel"
+        const val CATEGORY_RADIO = "radio"
+        const val CATEGORY_SCREEN = "screen"
+        const val CATEGORY_MEMORY = "memory"
+        const val CATEGORY_STORAGE = "storage"
+        const val CATEGORY_CPU = "cpu"
+        const val CATEGORY_NETWORK = "network"
+        const val CATEGORY_BATTERY = "battery"
+        
+        // 所有可选类别
+        val ALL_CATEGORIES = setOf(
+            CATEGORY_BASIC,
+            CATEGORY_SYSTEM,
+            CATEGORY_KERNEL,
+            CATEGORY_RADIO,
+            CATEGORY_SCREEN,
+            CATEGORY_MEMORY,
+            CATEGORY_STORAGE,
+            CATEGORY_CPU,
+            CATEGORY_NETWORK,
+            CATEGORY_BATTERY
+        )
+    }
+    
+    /**
+     * 根据用户选择收集设备信息
+     * @param selectedCategories 用户选择的信息类别，如果为 null 则收集所有信息
+     */
+    fun collectDeviceInfo(selectedCategories: Set<String>?): JSONObject {
         val deviceInfo = JSONObject()
+        
+        // 如果 selectedCategories 为 null，则收集所有信息
+        val categories = selectedCategories ?: ALL_CATEGORIES
 
         // Basic device information
-        deviceInfo.put("manufacturer", Build.MANUFACTURER)
-        deviceInfo.put("model", Build.MODEL)
-        deviceInfo.put("device", Build.DEVICE)
-        deviceInfo.put("product", Build.PRODUCT)
-        deviceInfo.put("brand", Build.BRAND)
-        deviceInfo.put("board", Build.BOARD)
-        deviceInfo.put("hardware", Build.HARDWARE)
-        deviceInfo.put("fingerprint", Build.FINGERPRINT)
-        deviceInfo.put("serial", try { 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                    Build.getSerial()
-                } else {
-                    "Permission denied"
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                Build.SERIAL
-            }
-        } catch (e: Exception) { "Unknown" })
-        deviceInfo.put("deviceId", try { Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) } catch (e: Exception) { "Unknown" })
-        deviceInfo.put("buildTags", Build.TAGS)
-        deviceInfo.put("buildType", Build.TYPE)
-        deviceInfo.put("buildUser", Build.USER)
-        deviceInfo.put("buildHost", Build.HOST)
-        
-        // System information
-        val systemInfo = JSONObject()
-        systemInfo.put("androidVersion", Build.VERSION.RELEASE)
-        systemInfo.put("apiLevel", Build.VERSION.SDK_INT)
-        systemInfo.put("buildId", Build.ID)
-        systemInfo.put("buildTime", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(Build.TIME)))
-        systemInfo.put("securityPatch", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Build.VERSION.SECURITY_PATCH else "Not available")
-        systemInfo.put("bootloader", Build.BOOTLOADER)
-        systemInfo.put("androidId", Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID))
-        systemInfo.put("codename", Build.VERSION.CODENAME)
-        systemInfo.put("incremental", Build.VERSION.INCREMENTAL)
-        systemInfo.put("baseOS", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Build.VERSION.BASE_OS else "Not available")
-        systemInfo.put("previewSdkInt", Build.VERSION.PREVIEW_SDK_INT)
-        deviceInfo.put("system", systemInfo)
-        
-        // Kernel information
-        val kernelInfo = JSONObject()
-        try {
-            val kernelVersion = System.getProperty("os.version") ?: "Unknown"
-            kernelInfo.put("version", kernelVersion)
-            
-            // 获取更详细的内核信息
-            try {
-                val process = Runtime.getRuntime().exec("cat /proc/version")
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                val kernelDetails = reader.readLine() ?: "Unknown"
-                kernelInfo.put("details", kernelDetails)
-                reader.close()
-            } catch (e: Exception) {
-                kernelInfo.put("details", "Could not retrieve: ${e.message}")
-            }
-            
-            // 获取内核架构
-            kernelInfo.put("architecture", System.getProperty("os.arch") ?: "Unknown")
-            
-            // 获取内核参数
-            try {
-                val kernelParams = File("/proc/cmdline")
-                if (kernelParams.exists()) {
-                    val scanner = Scanner(kernelParams)
-                    val params = scanner.useDelimiter("\\A").next()
-                    kernelInfo.put("parameters", params)
-                    scanner.close()
-                }
-            } catch (e: Exception) {
-                kernelInfo.put("parameters", "Could not retrieve: ${e.message}")
-            }
-        } catch (e: Exception) {
-            kernelInfo.put("error", e.message ?: "Unknown error")
-        }
-        deviceInfo.put("kernel", kernelInfo)
-        
-        // 基带信息
-        val radioInfo = JSONObject()
-        try {
-            val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-            
-            // 基带版本
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (categories.contains(CATEGORY_BASIC)) {
+            val basicInfo = JSONObject()
+            basicInfo.put("manufacturer", Build.MANUFACTURER)
+            basicInfo.put("model", Build.MODEL)
+            basicInfo.put("device", Build.DEVICE)
+            basicInfo.put("product", Build.PRODUCT)
+            basicInfo.put("brand", Build.BRAND)
+            basicInfo.put("board", Build.BOARD)
+            basicInfo.put("hardware", Build.HARDWARE)
+            basicInfo.put("fingerprint", Build.FINGERPRINT)
+            basicInfo.put("serial", try { 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                        radioInfo.put("baseband", telephonyManager.getImei() ?: "Unknown")
+                        Build.getSerial()
                     } else {
-                        radioInfo.put("baseband", "Permission denied")
+                        "Permission denied"
                     }
                 } else {
                     @Suppress("DEPRECATION")
-                    if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                        radioInfo.put("baseband", telephonyManager.getDeviceId() ?: "Unknown")
-                    } else {
-                        radioInfo.put("baseband", "Permission denied")
+                    Build.SERIAL
+                }
+            } catch (e: Exception) { "Unknown" })
+            basicInfo.put("deviceId", try { Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) } catch (e: Exception) { "Unknown" })
+            basicInfo.put("buildTags", Build.TAGS)
+            basicInfo.put("buildType", Build.TYPE)
+            basicInfo.put("buildUser", Build.USER)
+            basicInfo.put("buildHost", Build.HOST)
+            deviceInfo.put("basic", basicInfo)
+        }
+        
+        // System information
+        if (categories.contains(CATEGORY_SYSTEM)) {
+            val systemInfo = JSONObject()
+            systemInfo.put("androidVersion", Build.VERSION.RELEASE)
+            systemInfo.put("apiLevel", Build.VERSION.SDK_INT)
+            systemInfo.put("buildId", Build.ID)
+            systemInfo.put("buildTime", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date(Build.TIME)))
+            systemInfo.put("securityPatch", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Build.VERSION.SECURITY_PATCH else "Not available")
+            systemInfo.put("bootloader", Build.BOOTLOADER)
+            systemInfo.put("androidId", Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID))
+            systemInfo.put("codename", Build.VERSION.CODENAME)
+            systemInfo.put("incremental", Build.VERSION.INCREMENTAL)
+            systemInfo.put("baseOS", if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) Build.VERSION.BASE_OS else "Not available")
+            systemInfo.put("previewSdkInt", Build.VERSION.PREVIEW_SDK_INT)
+            deviceInfo.put("system", systemInfo)
+        }
+        
+        // Kernel information
+        if (categories.contains(CATEGORY_KERNEL)) {
+            val kernelInfo = JSONObject()
+            try {
+                val kernelVersion = System.getProperty("os.version") ?: "Unknown"
+                kernelInfo.put("version", kernelVersion)
+                
+                // 获取更详细的内核信息
+                try {
+                    val process = Runtime.getRuntime().exec("cat /proc/version")
+                    val reader = BufferedReader(InputStreamReader(process.inputStream))
+                    val kernelDetails = reader.readLine() ?: "Unknown"
+                    kernelInfo.put("details", kernelDetails)
+                    reader.close()
+                } catch (e: Exception) {
+                    kernelInfo.put("details", "Could not retrieve: ${e.message}")
+                }
+                
+                // 获取内核架构
+                kernelInfo.put("architecture", System.getProperty("os.arch") ?: "Unknown")
+                
+                // 获取内核参数
+                try {
+                    val kernelParams = File("/proc/cmdline")
+                    if (kernelParams.exists()) {
+                        val scanner = Scanner(kernelParams)
+                        val params = scanner.useDelimiter("\\A").next()
+                        kernelInfo.put("parameters", params)
+                        scanner.close()
                     }
+                } catch (e: Exception) {
+                    kernelInfo.put("parameters", "Could not retrieve: ${e.message}")
                 }
             } catch (e: Exception) {
-                radioInfo.put("baseband", "Error: ${e.message}")
+                kernelInfo.put("error", e.message ?: "Unknown error")
             }
-            
-            // 使用反射获取系统属性
-            try {
-                val basebandVersion = getSystemProperty("gsm.version.baseband", "Unknown")
-                radioInfo.put("basebandVersion", basebandVersion)
-                
-                val radioVersion = getSystemProperty("gsm.version.ril-impl", "Unknown")
-                radioInfo.put("radioVersion", radioVersion)
-                
-                // 获取 SIM 卡信息
-                val simInfo = JSONObject()
-                simInfo.put("country", telephonyManager.simCountryIso)
-                simInfo.put("operator", telephonyManager.simOperator)
-                simInfo.put("operatorName", telephonyManager.simOperatorName)
-                simInfo.put("state", getSimStateString(telephonyManager.simState))
-                radioInfo.put("sim", simInfo)
-                
-                // 网络类型
-                radioInfo.put("networkType", getNetworkTypeString(telephonyManager.networkType))
-                radioInfo.put("phoneType", getPhoneTypeString(telephonyManager.phoneType))
-                
-            } catch (e: Exception) {
-                radioInfo.put("error", "Could not retrieve all radio info: ${e.message}")
-            }
-        } catch (e: Exception) {
-            radioInfo.put("error", e.message ?: "Unknown error")
+            deviceInfo.put("kernel", kernelInfo)
         }
-        deviceInfo.put("radio", radioInfo)
+        
+        // 基带信息
+        if (categories.contains(CATEGORY_RADIO)) {
+            val radioInfo = JSONObject()
+            try {
+                val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+                
+                // 基带版本
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                            radioInfo.put("baseband", telephonyManager.getImei() ?: "Unknown")
+                        } else {
+                            radioInfo.put("baseband", "Permission denied")
+                        }
+                    } else {
+                        @Suppress("DEPRECATION")
+                        if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                            radioInfo.put("baseband", telephonyManager.getDeviceId() ?: "Unknown")
+                        } else {
+                            radioInfo.put("baseband", "Permission denied")
+                        }
+                    }
+                } catch (e: Exception) {
+                    radioInfo.put("baseband", "Error: ${e.message}")
+                }
+                
+                // 使用反射获取系统属性
+                try {
+                    val basebandVersion = getSystemProperty("gsm.version.baseband", "Unknown")
+                    radioInfo.put("basebandVersion", basebandVersion)
+                    
+                    val radioVersion = getSystemProperty("gsm.version.ril-impl", "Unknown")
+                    radioInfo.put("radioVersion", radioVersion)
+                    
+                    // 获取 SIM 卡信息
+                    val simInfo = JSONObject()
+                    simInfo.put("country", telephonyManager.simCountryIso)
+                    simInfo.put("operator", telephonyManager.simOperator)
+                    simInfo.put("operatorName", telephonyManager.simOperatorName)
+                    simInfo.put("state", getSimStateString(telephonyManager.simState))
+                    radioInfo.put("sim", simInfo)
+                    
+                    // 网络类型
+                    radioInfo.put("networkType", getNetworkTypeString(telephonyManager.networkType))
+                    radioInfo.put("phoneType", getPhoneTypeString(telephonyManager.phoneType))
+                    
+                } catch (e: Exception) {
+                    radioInfo.put("error", "Could not retrieve all radio info: ${e.message}")
+                }
+            } catch (e: Exception) {
+                radioInfo.put("error", e.message ?: "Unknown error")
+            }
+            deviceInfo.put("radio", radioInfo)
+        }
 
         // Screen information
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val displayMetrics = DisplayMetrics()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val display = context.display
-            display?.getRealMetrics(displayMetrics)
-        } else {
-            @Suppress("DEPRECATION")
-            windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+        if (categories.contains(CATEGORY_SCREEN)) {
+            val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val displayMetrics = DisplayMetrics()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                val display = context.display
+                display?.getRealMetrics(displayMetrics)
+            } else {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+            }
+            val screenInfo = JSONObject()
+            screenInfo.put("widthPixels", displayMetrics.widthPixels)
+            screenInfo.put("heightPixels", displayMetrics.heightPixels)
+            screenInfo.put("density", displayMetrics.density)
+            screenInfo.put("densityDpi", displayMetrics.densityDpi)
+            screenInfo.put("scaledDensity", displayMetrics.scaledDensity)
+            screenInfo.put("xdpi", displayMetrics.xdpi)
+            screenInfo.put("ydpi", displayMetrics.ydpi)
+            deviceInfo.put("screen", screenInfo)
         }
-        val screenInfo = JSONObject()
-        screenInfo.put("widthPixels", displayMetrics.widthPixels)
-        screenInfo.put("heightPixels", displayMetrics.heightPixels)
-        screenInfo.put("density", displayMetrics.density)
-        screenInfo.put("densityDpi", displayMetrics.densityDpi)
-        screenInfo.put("scaledDensity", displayMetrics.scaledDensity)
-        screenInfo.put("xdpi", displayMetrics.xdpi)
-        screenInfo.put("ydpi", displayMetrics.ydpi)
-        deviceInfo.put("screen", screenInfo)
 
         // Memory information
-        val memoryInfo = ActivityManager.MemoryInfo()
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        activityManager.getMemoryInfo(memoryInfo)
-        val memoryJson = JSONObject()
-        memoryJson.put("totalRam", formatSize(memoryInfo.totalMem))
-        memoryJson.put("availableRam", formatSize(memoryInfo.availMem))
-        memoryJson.put("lowMemory", memoryInfo.lowMemory)
-        memoryJson.put("threshold", formatSize(memoryInfo.threshold))
-        deviceInfo.put("memory", memoryJson)
+        if (categories.contains(CATEGORY_MEMORY)) {
+            val memoryInfo = ActivityManager.MemoryInfo()
+            val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            activityManager.getMemoryInfo(memoryInfo)
+            val memoryJson = JSONObject()
+            memoryJson.put("totalRam", formatSize(memoryInfo.totalMem))
+            memoryJson.put("availableRam", formatSize(memoryInfo.availMem))
+            memoryJson.put("lowMemory", memoryInfo.lowMemory)
+            memoryJson.put("threshold", formatSize(memoryInfo.threshold))
+            deviceInfo.put("memory", memoryJson)
+        }
 
         // Storage information
-        val storageJson = JSONObject()
-        try {
-            val internalStat = StatFs(Environment.getDataDirectory().path)
-            val externalStat = StatFs(Environment.getExternalStorageDirectory().path)
+        if (categories.contains(CATEGORY_STORAGE)) {
+            val storageJson = JSONObject()
+            try {
+                val internalStat = StatFs(Environment.getDataDirectory().path)
+                val externalStat = StatFs(Environment.getExternalStorageDirectory().path)
 
-            val internalTotal = internalStat.blockCountLong * internalStat.blockSizeLong
-            val internalFree = internalStat.availableBlocksLong * internalStat.blockSizeLong
-            
-            val externalTotal = externalStat.blockCountLong * externalStat.blockSizeLong
-            val externalFree = externalStat.availableBlocksLong * externalStat.blockSizeLong
+                val internalTotal = internalStat.blockCountLong * internalStat.blockSizeLong
+                val internalFree = internalStat.availableBlocksLong * internalStat.blockSizeLong
+                
+                val externalTotal = externalStat.blockCountLong * externalStat.blockSizeLong
+                val externalFree = externalStat.availableBlocksLong * externalStat.blockSizeLong
 
-            storageJson.put("internalTotal", formatSize(internalTotal))
-            storageJson.put("internalFree", formatSize(internalFree))
-            storageJson.put("externalTotal", formatSize(externalTotal))
-            storageJson.put("externalFree", formatSize(externalFree))
-        } catch (e: Exception) {
-            storageJson.put("error", e.message ?: "Unknown error")
+                storageJson.put("internalTotal", formatSize(internalTotal))
+                storageJson.put("internalFree", formatSize(internalFree))
+                storageJson.put("externalTotal", formatSize(externalTotal))
+                storageJson.put("externalFree", formatSize(externalFree))
+            } catch (e: Exception) {
+                storageJson.put("error", e.message ?: "Unknown error")
+            }
+            deviceInfo.put("storage", storageJson)
         }
-        deviceInfo.put("storage", storageJson)
 
         // CPU information
-        val cpuInfo = JSONObject()
-        cpuInfo.put("cores", Runtime.getRuntime().availableProcessors())
-        cpuInfo.put("architecture", Build.SUPPORTED_ABIS.joinToString(", "))
-        
-        // 获取CPU频率和更多信息
-        try {
-            // 获取CPU最大频率
-            val cpuInfoFile = File("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
-            if (cpuInfoFile.exists()) {
-                val scanner = Scanner(cpuInfoFile)
-                val maxFreq = scanner.nextLong() / 1000 // 转换为MHz
-                cpuInfo.put("maxFrequency", "$maxFreq MHz")
-                scanner.close()
-            }
+        if (categories.contains(CATEGORY_CPU)) {
+            val cpuInfo = JSONObject()
+            cpuInfo.put("cores", Runtime.getRuntime().availableProcessors())
+            cpuInfo.put("architecture", Build.SUPPORTED_ABIS.joinToString(", "))
             
-            // 获取CPU当前频率
-            val cpuCurrentFreqFile = File("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
-            if (cpuCurrentFreqFile.exists()) {
-                val scanner = Scanner(cpuCurrentFreqFile)
-                val currentFreq = scanner.nextLong() / 1000 // 转换为MHz
-                cpuInfo.put("currentFrequency", "$currentFreq MHz")
-                scanner.close()
-            }
-            
-            // 获取CPU温度
+            // 获取CPU频率和更多信息
             try {
-                val thermalZones = File("/sys/class/thermal").listFiles { file -> file.name.startsWith("thermal_zone") }
-                if (thermalZones != null && thermalZones.isNotEmpty()) {
-                    val temperatures = JSONObject()
-                    for (zone in thermalZones) {
-                        val typeFile = File(zone, "type")
-                        val tempFile = File(zone, "temp")
-                        if (typeFile.exists() && tempFile.exists()) {
-                            val type = BufferedReader(FileReader(typeFile)).readLine()
-                            val temp = BufferedReader(FileReader(tempFile)).readLine().toLong() / 1000.0 // 转换为摄氏度
-                            temperatures.put(type ?: zone.name, "$temp°C")
-                        }
-                    }
-                    cpuInfo.put("temperatures", temperatures)
-                }
-            } catch (e: Exception) {
-                cpuInfo.put("temperatureError", e.message ?: "Unknown error")
-            }
-            
-            // 获取CPU详细信息
-            val cpuInfoDetailFile = File("/proc/cpuinfo")
-            if (cpuInfoDetailFile.exists()) {
-                val reader = BufferedReader(FileReader(cpuInfoDetailFile))
-                var line: String?
-                val cpuDetails = JSONObject()
-                var processorCount = 0
-                var currentProcessor = JSONObject()
-                
-                // 用于提取CPU型号的变量
-                var cpuModel = ""
-                var hardware = ""
-                var implementer = ""
-                var architecture = ""
-                var variant = ""
-                var part = ""
-                var revision = ""
-                
-                while (reader.readLine().also { line = it } != null) {
-                    if (line.isNullOrBlank()) {
-                        if (currentProcessor.length() > 0) {
-                            cpuDetails.put("processor$processorCount", currentProcessor)
-                            currentProcessor = JSONObject()
-                            processorCount++
-                        }
-                        continue
-                    }
-                    
-                    val parts = line!!.split(":").map { it.trim() }
-                    if (parts.size >= 2) {
-                        val key = parts[0].replace("\\s+".toRegex(), "_")
-                        val value = parts.subList(1, parts.size).joinToString(":")
-                        currentProcessor.put(key, value)
-                        
-                        // 提取CPU型号相关信息
-                        when (key.lowercase()) {
-                            "model_name", "processor" -> if (cpuModel.isEmpty()) cpuModel = value
-                            "hardware" -> hardware = value
-                            "cpu_implementer" -> implementer = value
-                            "cpu_architecture" -> architecture = value
-                            "cpu_variant" -> variant = value
-                            "cpu_part" -> part = value
-                            "cpu_revision" -> revision = value
-                        }
-                    }
+                // 获取CPU最大频率
+                val cpuInfoFile = File("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
+                if (cpuInfoFile.exists()) {
+                    val scanner = Scanner(cpuInfoFile)
+                    val maxFreq = scanner.nextLong() / 1000 // 转换为MHz
+                    cpuInfo.put("maxFrequency", "$maxFreq MHz")
+                    scanner.close()
                 }
                 
-                // 添加最后一个处理器信息
-                if (currentProcessor.length() > 0) {
-                    cpuDetails.put("processor$processorCount", currentProcessor)
+                // 获取CPU当前频率
+                val cpuCurrentFreqFile = File("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
+                if (cpuCurrentFreqFile.exists()) {
+                    val scanner = Scanner(cpuCurrentFreqFile)
+                    val currentFreq = scanner.nextLong() / 1000 // 转换为MHz
+                    cpuInfo.put("currentFrequency", "$currentFreq MHz")
+                    scanner.close()
                 }
                 
-                reader.close()
-                
-                // 根据提取的信息生成CPU型号
-                val modelInfo = JSONObject()
-                if (cpuModel.isNotEmpty()) modelInfo.put("model", cpuModel)
-                if (hardware.isNotEmpty()) modelInfo.put("hardware", hardware)
-                if (implementer.isNotEmpty()) modelInfo.put("implementer", implementer)
-                if (architecture.isNotEmpty()) modelInfo.put("architecture", architecture)
-                if (variant.isNotEmpty()) modelInfo.put("variant", variant)
-                if (part.isNotEmpty()) modelInfo.put("part", part)
-                if (revision.isNotEmpty()) modelInfo.put("revision", revision)
-                
-                // 尝试获取更友好的CPU型号名称
+                // 获取CPU温度
                 try {
-                    val cpuHardware = getSystemProperty("ro.hardware", "")
-                    val cpuBoardPlatform = getSystemProperty("ro.board.platform", "")
-                    val cpuChipname = getSystemProperty("ro.chipname", "")
-                    val socManufacturer = getSystemProperty("ro.soc.manufacturer", "")
-                    val socModel = getSystemProperty("ro.soc.model", "")
-                    
-                    if (cpuHardware.isNotEmpty()) modelInfo.put("hardware_prop", cpuHardware)
-                    if (cpuBoardPlatform.isNotEmpty()) modelInfo.put("platform", cpuBoardPlatform)
-                    if (cpuChipname.isNotEmpty()) modelInfo.put("chipname", cpuChipname)
-                    if (socManufacturer.isNotEmpty()) modelInfo.put("soc_manufacturer", socManufacturer)
-                    if (socModel.isNotEmpty()) modelInfo.put("soc_model", socModel)
-                    
-                    // 尝试构建一个友好的CPU型号名称
-                    val friendlyModel = when {
-                        socManufacturer.isNotEmpty() && socModel.isNotEmpty() -> "$socManufacturer $socModel"
-                        cpuChipname.isNotEmpty() -> cpuChipname
-                        cpuBoardPlatform.isNotEmpty() -> cpuBoardPlatform
-                        cpuHardware.isNotEmpty() -> cpuHardware
-                        hardware.isNotEmpty() -> hardware
-                        cpuModel.isNotEmpty() -> cpuModel
-                        else -> null
-                    }
-                    
-                    if (friendlyModel != null) {
-                        cpuInfo.put("model", friendlyModel)
+                    val thermalZones = File("/sys/class/thermal").listFiles { file -> file.name.startsWith("thermal_zone") }
+                    if (thermalZones != null && thermalZones.isNotEmpty()) {
+                        val temperatures = JSONObject()
+                        for (zone in thermalZones) {
+                            val typeFile = File(zone, "type")
+                            val tempFile = File(zone, "temp")
+                            if (typeFile.exists() && tempFile.exists()) {
+                                val type = BufferedReader(FileReader(typeFile)).readLine()
+                                val temp = BufferedReader(FileReader(tempFile)).readLine().toLong() / 1000.0 // 转换为摄氏度
+                                temperatures.put(type ?: zone.name, "$temp°C")
+                            }
+                        }
+                        cpuInfo.put("temperatures", temperatures)
                     }
                 } catch (e: Exception) {
-                    // 忽略异常
+                    cpuInfo.put("temperatureError", e.message ?: "Unknown error")
                 }
                 
-                cpuInfo.put("modelInfo", modelInfo)
-                cpuInfo.put("details", cpuDetails)
-                
-                // 尝试使用 getprop 命令获取更多信息
-                try {
-                    val process = Runtime.getRuntime().exec("getprop ro.board.platform")
-                    val reader = BufferedReader(InputStreamReader(process.inputStream))
-                    val platform = reader.readLine()?.trim()
+                // 获取CPU详细信息
+                val cpuInfoDetailFile = File("/proc/cpuinfo")
+                if (cpuInfoDetailFile.exists()) {
+                    val reader = BufferedReader(FileReader(cpuInfoDetailFile))
+                    var line: String?
+                    val cpuDetails = JSONObject()
+                    var processorCount = 0
+                    var currentProcessor = JSONObject()
+                    
+                    // 用于提取CPU型号的变量
+                    var cpuModel = ""
+                    var hardware = ""
+                    var implementer = ""
+                    var architecture = ""
+                    var variant = ""
+                    var part = ""
+                    var revision = ""
+                    
+                    while (reader.readLine().also { line = it } != null) {
+                        if (line.isNullOrBlank()) {
+                            if (currentProcessor.length() > 0) {
+                                cpuDetails.put("processor$processorCount", currentProcessor)
+                                currentProcessor = JSONObject()
+                                processorCount++
+                            }
+                            continue
+                        }
+                        
+                        val parts = line!!.split(":").map { it.trim() }
+                        if (parts.size >= 2) {
+                            val key = parts[0].replace("\\s+".toRegex(), "_")
+                            val value = parts.subList(1, parts.size).joinToString(":")
+                            currentProcessor.put(key, value)
+                            
+                            // 提取CPU型号相关信息
+                            when (key.lowercase()) {
+                                "model_name", "processor" -> if (cpuModel.isEmpty()) cpuModel = value
+                                "hardware" -> hardware = value
+                                "cpu_implementer" -> implementer = value
+                                "cpu_architecture" -> architecture = value
+                                "cpu_variant" -> variant = value
+                                "cpu_part" -> part = value
+                                "cpu_revision" -> revision = value
+                            }
+                        }
+                    }
+                    
+                    // 添加最后一个处理器信息
+                    if (currentProcessor.length() > 0) {
+                        cpuDetails.put("processor$processorCount", currentProcessor)
+                    }
+                    
                     reader.close()
                     
-                    if (!platform.isNullOrEmpty()) {
-                        cpuInfo.put("platform_cmd", platform)
+                    // 根据提取的信息生成CPU型号
+                    val modelInfo = JSONObject()
+                    if (cpuModel.isNotEmpty()) modelInfo.put("model", cpuModel)
+                    if (hardware.isNotEmpty()) modelInfo.put("hardware", hardware)
+                    if (implementer.isNotEmpty()) modelInfo.put("implementer", implementer)
+                    if (architecture.isNotEmpty()) modelInfo.put("architecture", architecture)
+                    if (variant.isNotEmpty()) modelInfo.put("variant", variant)
+                    if (part.isNotEmpty()) modelInfo.put("part", part)
+                    if (revision.isNotEmpty()) modelInfo.put("revision", revision)
+                    
+                    // 尝试获取更友好的CPU型号名称
+                    try {
+                        val cpuHardware = getSystemProperty("ro.hardware", "")
+                        val cpuBoardPlatform = getSystemProperty("ro.board.platform", "")
+                        val cpuChipname = getSystemProperty("ro.chipname", "")
+                        val socManufacturer = getSystemProperty("ro.soc.manufacturer", "")
+                        val socModel = getSystemProperty("ro.soc.model", "")
+                        
+                        if (cpuHardware.isNotEmpty()) modelInfo.put("hardware_prop", cpuHardware)
+                        if (cpuBoardPlatform.isNotEmpty()) modelInfo.put("platform", cpuBoardPlatform)
+                        if (cpuChipname.isNotEmpty()) modelInfo.put("chipname", cpuChipname)
+                        if (socManufacturer.isNotEmpty()) modelInfo.put("soc_manufacturer", socManufacturer)
+                        if (socModel.isNotEmpty()) modelInfo.put("soc_model", socModel)
+                        
+                        // 尝试构建一个友好的CPU型号名称
+                        val friendlyModel = when {
+                            socManufacturer.isNotEmpty() && socModel.isNotEmpty() -> "$socManufacturer $socModel"
+                            cpuChipname.isNotEmpty() -> cpuChipname
+                            cpuBoardPlatform.isNotEmpty() -> cpuBoardPlatform
+                            cpuHardware.isNotEmpty() -> cpuHardware
+                            hardware.isNotEmpty() -> hardware
+                            cpuModel.isNotEmpty() -> cpuModel
+                            else -> null
+                        }
+                        
+                        if (friendlyModel != null) {
+                            cpuInfo.put("model", friendlyModel)
+                        }
+                    } catch (e: Exception) {
+                        // 忽略异常
                     }
-                } catch (e: Exception) {
-                    // 忽略异常
+                    
+                    cpuInfo.put("modelInfo", modelInfo)
+                    cpuInfo.put("details", cpuDetails)
+                    
+                    // 尝试使用 getprop 命令获取更多信息
+                    try {
+                        val process = Runtime.getRuntime().exec("getprop ro.board.platform")
+                        val reader = BufferedReader(InputStreamReader(process.inputStream))
+                        val platform = reader.readLine()?.trim()
+                        reader.close()
+                        
+                        if (!platform.isNullOrEmpty()) {
+                            cpuInfo.put("platform_cmd", platform)
+                        }
+                    } catch (e: Exception) {
+                        // 忽略异常
+                    }
                 }
+            } catch (e: Exception) {
+                cpuInfo.put("detailsError", e.message ?: "Unknown error")
             }
-        } catch (e: Exception) {
-            cpuInfo.put("detailsError", e.message ?: "Unknown error")
+            
+            deviceInfo.put("cpu", cpuInfo)
         }
-        
-        deviceInfo.put("cpu", cpuInfo)
 
         // Installed apps count
-        try {
-            val packageManager = context.packageManager
-            val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-            deviceInfo.put("installedAppsCount", installedApps.size)
-        } catch (e: Exception) {
-            deviceInfo.put("installedAppsCount", "Error: ${e.message}")
+        if (categories.contains(CATEGORY_BASIC)) {
+            try {
+                val packageManager = context.packageManager
+                val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+                val basicInfo = deviceInfo.optJSONObject("basic") ?: JSONObject()
+                basicInfo.put("installedAppsCount", installedApps.size)
+                deviceInfo.put("basic", basicInfo)
+            } catch (e: Exception) {
+                val basicInfo = deviceInfo.optJSONObject("basic") ?: JSONObject()
+                basicInfo.put("installedAppsCount", "Error: ${e.message}")
+                deviceInfo.put("basic", basicInfo)
+            }
         }
 
         // Battery information
-        val batteryInfo = JSONObject()
-        try {
-            val intentFilter = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
-            val level = intentFilter?.getIntExtra("level", -1) ?: -1
-            val scale = intentFilter?.getIntExtra("scale", -1) ?: -1
-            val temperature = intentFilter?.getIntExtra("temperature", -1) ?: -1
-            val voltage = intentFilter?.getIntExtra("voltage", -1) ?: -1
-            val status = intentFilter?.getIntExtra("status", -1) ?: -1
-            val health = intentFilter?.getIntExtra("health", -1) ?: -1
-            val plugged = intentFilter?.getIntExtra("plugged", -1) ?: -1
+        if (categories.contains(CATEGORY_BATTERY)) {
+            val batteryInfo = JSONObject()
+            try {
+                val intentFilter = context.registerReceiver(null, android.content.IntentFilter(android.content.Intent.ACTION_BATTERY_CHANGED))
+                val level = intentFilter?.getIntExtra("level", -1) ?: -1
+                val scale = intentFilter?.getIntExtra("scale", -1) ?: -1
+                val temperature = intentFilter?.getIntExtra("temperature", -1) ?: -1
+                val voltage = intentFilter?.getIntExtra("voltage", -1) ?: -1
+                val status = intentFilter?.getIntExtra("status", -1) ?: -1
+                val health = intentFilter?.getIntExtra("health", -1) ?: -1
+                val plugged = intentFilter?.getIntExtra("plugged", -1) ?: -1
 
-            batteryInfo.put("level", if (scale > 0) (level * 100 / scale) else level)
-            batteryInfo.put("temperature", temperature / 10.0)
-            batteryInfo.put("voltage", voltage / 1000.0)
-            batteryInfo.put("status", getBatteryStatus(status))
-            batteryInfo.put("health", getBatteryHealth(health))
-            batteryInfo.put("plugged", getChargingMethod(plugged))
-        } catch (e: Exception) {
-            batteryInfo.put("error", e.message ?: "Unknown error")
+                batteryInfo.put("level", if (scale > 0) (level * 100 / scale) else level)
+                batteryInfo.put("temperature", temperature / 10.0)
+                batteryInfo.put("voltage", voltage / 1000.0)
+                batteryInfo.put("status", getBatteryStatus(status))
+                batteryInfo.put("health", getBatteryHealth(health))
+                batteryInfo.put("plugged", getChargingMethod(plugged))
+            } catch (e: Exception) {
+                batteryInfo.put("error", e.message ?: "Unknown error")
+            }
+            deviceInfo.put("battery", batteryInfo)
         }
-        deviceInfo.put("battery", batteryInfo)
 
         // Network information
-        val networkInfo = JSONObject()
-        try {
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                val network = connectivityManager.activeNetwork
-                val capabilities = connectivityManager.getNetworkCapabilities(network)
-                
-                if (capabilities != null) {
-                    networkInfo.put("hasInternet", capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))
-                    networkInfo.put("hasWifi", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI))
-                    networkInfo.put("hasCellular", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR))
-                    networkInfo.put("hasEthernet", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))
-                    networkInfo.put("hasVpn", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN))
-                    networkInfo.put("hasBluetoothInternet", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_BLUETOOTH))
+        if (categories.contains(CATEGORY_NETWORK)) {
+            val networkInfo = JSONObject()
+            try {
+                val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val network = connectivityManager.activeNetwork
+                    val capabilities = connectivityManager.getNetworkCapabilities(network)
+                    
+                    if (capabilities != null) {
+                        networkInfo.put("hasInternet", capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET))
+                        networkInfo.put("hasWifi", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI))
+                        networkInfo.put("hasCellular", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR))
+                        networkInfo.put("hasEthernet", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET))
+                        networkInfo.put("hasVpn", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN))
+                        networkInfo.put("hasBluetoothInternet", capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_BLUETOOTH))
+                    } else {
+                        networkInfo.put("status", "No active network")
+                    }
                 } else {
-                    networkInfo.put("status", "No active network")
+                    @Suppress("DEPRECATION")
+                    val activeNetwork = connectivityManager.activeNetworkInfo
+                    @Suppress("DEPRECATION")
+                    networkInfo.put("connected", activeNetwork?.isConnected ?: false)
+                    @Suppress("DEPRECATION")
+                    networkInfo.put("type", activeNetwork?.typeName ?: "None")
                 }
-            } else {
-                @Suppress("DEPRECATION")
-                val activeNetwork = connectivityManager.activeNetworkInfo
-                @Suppress("DEPRECATION")
-                networkInfo.put("connected", activeNetwork?.isConnected ?: false)
-                @Suppress("DEPRECATION")
-                networkInfo.put("type", activeNetwork?.typeName ?: "None")
-            }
-            
-            // MAC 地址信息
-            try {
-                val macAddresses = JSONObject()
-                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-                for (networkInterface in interfaces) {
-                    if (!networkInterface.name.equals("lo", ignoreCase = true)) {
-                        val macBytes = networkInterface.hardwareAddress
-                        if (macBytes != null) {
-                            val mac = StringBuilder()
-                            for (b in macBytes) {
-                                mac.append(String.format("%02X:", b))
-                            }
-                            if (mac.isNotEmpty()) {
-                                mac.deleteCharAt(mac.length - 1) // 删除最后的冒号
-                                macAddresses.put(networkInterface.name, mac.toString())
+                
+                // MAC 地址信息
+                try {
+                    val macAddresses = JSONObject()
+                    val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                    for (networkInterface in interfaces) {
+                        if (!networkInterface.name.equals("lo", ignoreCase = true)) {
+                            val macBytes = networkInterface.hardwareAddress
+                            if (macBytes != null) {
+                                val mac = StringBuilder()
+                                for (b in macBytes) {
+                                    mac.append(String.format("%02X:", b))
+                                }
+                                if (mac.isNotEmpty()) {
+                                    mac.deleteCharAt(mac.length - 1) // 删除最后的冒号
+                                    macAddresses.put(networkInterface.name, mac.toString())
+                                }
                             }
                         }
                     }
+                    networkInfo.put("macAddresses", macAddresses)
+                } catch (e: Exception) {
+                    networkInfo.put("macAddressesError", e.message ?: "Unknown error")
                 }
-                networkInfo.put("macAddresses", macAddresses)
-            } catch (e: Exception) {
-                networkInfo.put("macAddressesError", e.message ?: "Unknown error")
-            }
-            
-            // IP 地址信息
-            try {
-                val ipAddresses = JSONObject()
-                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-                for (networkInterface in interfaces) {
-                    val addresses = Collections.list(networkInterface.inetAddresses)
-                    val ipList = JSONArray()
-                    for (address in addresses) {
-                        if (!address.isLoopbackAddress) {
-                            ipList.put(address.hostAddress)
+                
+                // IP 地址信息
+                try {
+                    val ipAddresses = JSONObject()
+                    val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                    for (networkInterface in interfaces) {
+                        val addresses = Collections.list(networkInterface.inetAddresses)
+                        val ipList = JSONArray()
+                        for (address in addresses) {
+                            if (!address.isLoopbackAddress) {
+                                ipList.put(address.hostAddress)
+                            }
+                        }
+                        if (ipList.length() > 0) {
+                            ipAddresses.put(networkInterface.name, ipList)
                         }
                     }
-                    if (ipList.length() > 0) {
-                        ipAddresses.put(networkInterface.name, ipList)
-                    }
+                    networkInfo.put("ipAddresses", ipAddresses)
+                } catch (e: Exception) {
+                    networkInfo.put("ipAddressesError", e.message ?: "Unknown error")
                 }
-                networkInfo.put("ipAddresses", ipAddresses)
             } catch (e: Exception) {
-                networkInfo.put("ipAddressesError", e.message ?: "Unknown error")
+                networkInfo.put("error", e.message ?: "Unknown error")
             }
-        } catch (e: Exception) {
-            networkInfo.put("error", e.message ?: "Unknown error")
+            deviceInfo.put("network", networkInfo)
         }
-        deviceInfo.put("network", networkInfo)
 
         return deviceInfo
     }
 
+    /**
+     * 保存设备信息到文件，收集所有信息
+     */
     fun saveDeviceInfoToFile(directory: String): String {
-        val deviceInfo = collectDeviceInfo()
+        return saveDeviceInfoToFile(directory, null)
+    }
+    
+    /**
+     * 根据用户选择保存设备信息到文件
+     * @param directory 保存目录
+     * @param selectedCategories 用户选择的信息类别，如果为 null 则收集所有信息
+     */
+    fun saveDeviceInfoToFile(directory: String, selectedCategories: Set<String>?): String {
+        val deviceInfo = collectDeviceInfo(selectedCategories)
         
         // Create directory if it doesn't exist
         val dir = File(directory)

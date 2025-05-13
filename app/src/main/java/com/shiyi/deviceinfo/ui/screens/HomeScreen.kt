@@ -18,12 +18,17 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocumentTree
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Divider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
@@ -70,6 +75,10 @@ fun HomeScreen() {
     var selectedFolderPath by remember { mutableStateOf<String?>(null) }
     var showFolderSelection by remember { mutableStateOf(false) }
     
+    // 用户选择的信息类别
+    var selectedCategories by remember { mutableStateOf(DeviceInfoCollector.ALL_CATEGORIES.toSet()) }
+    var showCategorySelection by remember { mutableStateOf(false) }
+    
     // Storage permission request
     val hasStoragePermission = remember {
         mutableStateOf(
@@ -91,8 +100,8 @@ fun HomeScreen() {
         uri?.let {
             try {
                 Log.d("DeviceInfo", "Selected document URI: $uri")
-                // 直接保存到选定的 URI
-                saveDeviceInfoToUri(deviceInfoCollector, uri, snackbarHostState, scope)
+                // 直接保存到选定的 URI，传递用户选择的类别
+                saveDeviceInfoToUri(deviceInfoCollector, uri, snackbarHostState, scope, selectedCategories = selectedCategories)
             } catch (e: Exception) {
                 Log.e("DeviceInfo", "Error saving document: ${e.message}", e)
                 scope.launch {
@@ -107,7 +116,7 @@ fun HomeScreen() {
         contract = CreateDocument("application/json")
     ) { uri ->
         uri?.let {
-            saveDeviceInfoToUri(deviceInfoCollector, uri, snackbarHostState, scope)
+            saveDeviceInfoToUri(deviceInfoCollector, uri, snackbarHostState, scope, selectedCategories = selectedCategories)
         }
     }
     
@@ -380,12 +389,12 @@ fun HomeScreen() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             // For Android 11+, use the Storage Access Framework
                             val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-                            saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope, downloadDir)
+                            saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope, downloadDir, selectedCategories)
                         } else {
                             // For older Android versions, request permission if not granted
                             if (hasStoragePermission.value) {
                                 val downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-                                saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope, downloadDir)
+                                saveDeviceInfoToFile(deviceInfoCollector, snackbarHostState, scope, downloadDir, selectedCategories)
                             } else {
                                 permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                             }
@@ -416,7 +425,204 @@ fun HomeScreen() {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 
-                // 已移除文件夹路径显示，因为我们现在使用文件选择器
+                // 类别选择按钮
+                IOSButton(
+                    text = "${if (showCategorySelection) "隐藏类别选择" else "选择要导出的类别"}",
+                    onClick = { showCategorySelection = !showCategorySelection },
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                
+                // 类别选择界面
+                if (showCategorySelection) {
+                    IOSCard(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "选择要导出的信息类别",
+                                fontSize = 16.sp,
+                                color = IOSColors.primary
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // 全选/取消全选按钮
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                            ) {
+                                IOSButton(
+                                    text = "全选",
+                                    onClick = { selectedCategories = DeviceInfoCollector.ALL_CATEGORIES.toSet() },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                Spacer(modifier = Modifier.width(8.dp))
+                                
+                                IOSButton(
+                                    text = "取消全选",
+                                    onClick = { selectedCategories = emptySet() },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Divider(color = IOSColors.lightGray)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            
+                            // 基本信息
+                            CategoryCheckbox(
+                                title = "基本设备信息",
+                                category = DeviceInfoCollector.CATEGORY_BASIC,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_BASIC),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_BASIC
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_BASIC
+                                    }
+                                }
+                            )
+                            
+                            // 系统信息
+                            CategoryCheckbox(
+                                title = "系统信息",
+                                category = DeviceInfoCollector.CATEGORY_SYSTEM,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_SYSTEM),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_SYSTEM
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_SYSTEM
+                                    }
+                                }
+                            )
+                            
+                            // 内核信息
+                            CategoryCheckbox(
+                                title = "内核信息",
+                                category = DeviceInfoCollector.CATEGORY_KERNEL,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_KERNEL),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_KERNEL
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_KERNEL
+                                    }
+                                }
+                            )
+                            
+                            // 基带信息
+                            CategoryCheckbox(
+                                title = "基带信息",
+                                category = DeviceInfoCollector.CATEGORY_RADIO,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_RADIO),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_RADIO
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_RADIO
+                                    }
+                                }
+                            )
+                            
+                            // 屏幕信息
+                            CategoryCheckbox(
+                                title = "屏幕信息",
+                                category = DeviceInfoCollector.CATEGORY_SCREEN,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_SCREEN),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_SCREEN
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_SCREEN
+                                    }
+                                }
+                            )
+                            
+                            // 内存信息
+                            CategoryCheckbox(
+                                title = "内存信息",
+                                category = DeviceInfoCollector.CATEGORY_MEMORY,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_MEMORY),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_MEMORY
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_MEMORY
+                                    }
+                                }
+                            )
+                            
+                            // 存储信息
+                            CategoryCheckbox(
+                                title = "存储信息",
+                                category = DeviceInfoCollector.CATEGORY_STORAGE,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_STORAGE),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_STORAGE
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_STORAGE
+                                    }
+                                }
+                            )
+                            
+                            // CPU信息
+                            CategoryCheckbox(
+                                title = "CPU信息",
+                                category = DeviceInfoCollector.CATEGORY_CPU,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_CPU),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_CPU
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_CPU
+                                    }
+                                }
+                            )
+                            
+                            // 网络信息
+                            CategoryCheckbox(
+                                title = "网络信息",
+                                category = DeviceInfoCollector.CATEGORY_NETWORK,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_NETWORK),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_NETWORK
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_NETWORK
+                                    }
+                                }
+                            )
+                            
+                            // 电池信息
+                            CategoryCheckbox(
+                                title = "电池信息",
+                                category = DeviceInfoCollector.CATEGORY_BATTERY,
+                                isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_BATTERY),
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + DeviceInfoCollector.CATEGORY_BATTERY
+                                    } else {
+                                        selectedCategories - DeviceInfoCollector.CATEGORY_BATTERY
+                                    }
+                                }
+                            )
+                            
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "已选择 ${selectedCategories.size} / ${DeviceInfoCollector.ALL_CATEGORIES.size} 项",
+                                fontSize = 14.sp,
+                                color = IOSColors.gray,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -424,16 +630,49 @@ fun HomeScreen() {
     }
 }
 
+/**
+ * 类别选择复选框组件
+ */
+@Composable
+private fun CategoryCheckbox(
+    title: String,
+    category: String,
+    isSelected: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+    ) {
+        Checkbox(
+            checked = isSelected,
+            onCheckedChange = onCheckedChange,
+            colors = androidx.compose.material3.CheckboxDefaults.colors(
+                checkedColor = IOSColors.primary,
+                uncheckedColor = IOSColors.gray
+            )
+        )
+        Text(
+            text = title,
+            fontSize = 16.sp,
+            color = IOSColors.darkText
+        )
+    }
+}
+
 private fun saveDeviceInfoToFile(
     deviceInfoCollector: DeviceInfoCollector,
     snackbarHostState: SnackbarHostState,
     scope: kotlinx.coroutines.CoroutineScope,
-    directory: String? = null
+    directory: String? = null,
+    selectedCategories: Set<String>? = null
 ) {
     try {
         // 使用指定的文件夹路径或默认的下载目录
         val targetDir = directory ?: Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
-        val filePath = deviceInfoCollector.saveDeviceInfoToFile(targetDir)
+        val filePath = deviceInfoCollector.saveDeviceInfoToFile(targetDir, selectedCategories)
         scope.launch {
             snackbarHostState.showSnackbar("File saved to: $filePath")
         }
@@ -452,12 +691,13 @@ private fun saveDeviceInfoToUri(
     uri: Uri,
     snackbarHostState: SnackbarHostState,
     scope: kotlinx.coroutines.CoroutineScope,
-    filename: String? = null
+    filename: String? = null,
+    selectedCategories: Set<String>? = null
 ) {
     try {
         Log.d("DeviceInfo", "Saving to URI: $uri")
         val context = deviceInfoCollector.getContext()
-        val deviceInfo = deviceInfoCollector.collectDeviceInfo()
+        val deviceInfo = deviceInfoCollector.collectDeviceInfo(selectedCategories)
         
         // 尝试打开输出流
         val outputStream = context.contentResolver.openOutputStream(uri)

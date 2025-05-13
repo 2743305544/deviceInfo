@@ -42,6 +42,7 @@ object IOSColors {
     val gray = Color(0xFF8E8E93)
     val lightGray = Color(0xFFD1D1D6)
     val divider = Color(0xFFE5E5EA)
+    val darkText = Color(0xFF000000) // 添加深色文本颜色
 }
 
 @Composable
