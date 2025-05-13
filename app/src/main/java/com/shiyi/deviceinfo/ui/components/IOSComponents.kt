@@ -161,7 +161,11 @@ fun IOSButton(
 }
 
 @Composable
-fun IOSNavigationBar(title: String) {
+fun IOSNavigationBar(
+    title: String,
+    onLanguageToggle: (() -> Unit)? = null,
+    languageButtonText: String? = null
+) {
     Surface(
         color = IOSColors.cardBackground,
         shadowElevation = 4.dp
@@ -172,6 +176,24 @@ fun IOSNavigationBar(title: String) {
                 .height(56.dp),
             contentAlignment = Alignment.Center
         ) {
+            // 语言切换按钮，如果提供了回调函数
+            if (onLanguageToggle != null && languageButtonText != null) {
+                androidx.compose.material3.TextButton(
+                    onClick = onLanguageToggle,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 8.dp)
+                ) {
+                    Text(
+                        text = languageButtonText,
+                        fontSize = 14.sp,
+                        color = IOSColors.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
+            // 标题
             Text(
                 text = title,
                 fontSize = 17.sp,

@@ -11,6 +11,7 @@ import android.telephony.TelephonyManager
 import android.util.DisplayMetrics
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
+import com.shiyi.deviceinfo.R
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
@@ -71,6 +72,138 @@ class DeviceInfoCollector(private val context: Context) {
         )
     }
     
+
+    
+    /**
+     * 获取本地化的键名
+     * 将英文键名转换为当前语言的字符串资源
+     */
+    private fun getLocalizedKey(key: String): String {
+        val resourceId = when (key) {
+            // Basic Info
+            "manufacturer" -> R.string.info_manufacturer
+            "model" -> R.string.info_model
+            "device" -> R.string.info_device
+            "product" -> R.string.info_product
+            "brand" -> R.string.info_brand
+            "board" -> R.string.info_board
+            "hardware" -> R.string.info_hardware
+            "fingerprint" -> R.string.info_fingerprint
+            "serial" -> R.string.info_serial
+            "deviceId" -> R.string.info_android_id
+            "buildTags" -> R.string.info_build_tags
+            "buildType" -> R.string.info_build_type
+            "buildUser" -> R.string.info_build_user
+            "buildHost" -> R.string.info_build_host
+            
+            // System Info
+            "osVersion" -> R.string.info_os_version
+            "sdkVersion" -> R.string.info_sdk_version
+            "securityPatch" -> R.string.info_security_patch
+            "bootloader" -> R.string.info_bootloader
+            "buildId" -> R.string.info_build_id
+            "javaVM" -> R.string.info_java_vm
+            "openGLVersion" -> R.string.info_opengl_es
+            "uptime" -> R.string.info_uptime
+            "rootStatus" -> R.string.info_root_status
+            "selinuxStatus" -> R.string.info_selinux_status
+            
+            // Kernel Info
+            "kernelVersion" -> R.string.info_kernel_version
+            "kernelArchitecture" -> R.string.info_kernel_architecture
+            
+            // Radio Info
+            "imei" -> R.string.info_imei
+            "meid" -> R.string.info_meid
+            "basebandVersion" -> R.string.info_baseband_version
+            "simOperator" -> R.string.info_sim_operator
+            "simState" -> R.string.info_sim_state
+            "networkType" -> R.string.info_network_type
+            "phoneType" -> R.string.info_phone_type
+            "signalStrength" -> R.string.info_signal_strength
+            
+            // Screen Info
+            "resolution" -> R.string.info_resolution
+            "density" -> R.string.info_density
+            "refreshRate" -> R.string.info_refresh_rate
+            "hdrSupport" -> R.string.info_hdr_support
+            
+            // Memory Info
+            "totalRAM" -> R.string.info_total_ram
+            "availableRAM" -> R.string.info_available_ram
+            "usedRAM" -> R.string.info_used_ram
+            "ramThreshold" -> R.string.info_ram_threshold
+            
+            // Storage Info
+            "internalStorage" -> R.string.info_internal_storage
+            "availableInternalStorage" -> R.string.info_available_internal_storage
+            "externalStorage" -> R.string.info_external_storage
+            "availableExternalStorage" -> R.string.info_available_external_storage
+            
+            // CPU Info
+            "processor" -> R.string.info_processor
+            "cpuArchitecture" -> R.string.info_cpu_architecture
+            "cores" -> R.string.info_cores
+            "cpuFrequencyRange" -> R.string.info_cpu_frequency_range
+            "cpuGovernor" -> R.string.info_cpu_governor
+            "abi" -> R.string.info_abi
+            "abiList" -> R.string.info_abi_list
+            
+            // Network Info
+            "ipAddress" -> R.string.info_ip_address
+            "macAddressWifi" -> R.string.info_mac_address_wifi
+            "macAddressBt" -> R.string.info_mac_address_bt
+            "connectionType" -> R.string.info_connection_type
+            "wifiSSID" -> R.string.info_wifi_ssid
+            "wifiBSSID" -> R.string.info_wifi_bssid
+            "wifiLinkSpeed" -> R.string.info_wifi_link_speed
+            
+            // Battery Info
+            "batteryLevel" -> R.string.info_battery_level
+            "batteryStatus" -> R.string.info_battery_status
+            "batteryHealth" -> R.string.info_battery_health
+            "batteryTechnology" -> R.string.info_battery_technology
+            "batteryTemperature" -> R.string.info_battery_temperature
+            "batteryVoltage" -> R.string.info_battery_voltage
+            "batteryCapacity" -> R.string.info_battery_capacity
+            "chargingMethod" -> R.string.info_charging_method
+            
+            // Default case - return the key itself if no mapping exists
+            else -> return key
+        }
+        
+        return try {
+            context.getString(resourceId)
+        } catch (e: Exception) {
+            key // Fallback to the original key if resource not found
+        }
+    }
+    
+    /**
+     * 获取本地化的类别名称
+     */
+    fun getLocalizedCategoryName(category: String): String {
+        val resourceId = when (category) {
+            CATEGORY_BASIC -> R.string.category_basic
+            CATEGORY_SYSTEM -> R.string.category_system
+            CATEGORY_KERNEL -> R.string.category_kernel
+            CATEGORY_RADIO -> R.string.category_radio
+            CATEGORY_SCREEN -> R.string.category_screen
+            CATEGORY_MEMORY -> R.string.category_memory
+            CATEGORY_STORAGE -> R.string.category_storage
+            CATEGORY_CPU -> R.string.category_cpu
+            CATEGORY_NETWORK -> R.string.category_network
+            CATEGORY_BATTERY -> R.string.category_battery
+            else -> return category
+        }
+        
+        return try {
+            context.getString(resourceId)
+        } catch (e: Exception) {
+            category // Fallback to the original category if resource not found
+        }
+    }
+
     /**
      * 根据用户选择收集设备信息
      * @param selectedCategories 用户选择的信息类别，如果为 null 则收集所有信息
@@ -84,15 +217,15 @@ class DeviceInfoCollector(private val context: Context) {
         // Basic device information
         if (categories.contains(CATEGORY_BASIC)) {
             val basicInfo = JSONObject()
-            basicInfo.put("manufacturer", Build.MANUFACTURER)
-            basicInfo.put("model", Build.MODEL)
-            basicInfo.put("device", Build.DEVICE)
-            basicInfo.put("product", Build.PRODUCT)
-            basicInfo.put("brand", Build.BRAND)
-            basicInfo.put("board", Build.BOARD)
-            basicInfo.put("hardware", Build.HARDWARE)
-            basicInfo.put("fingerprint", Build.FINGERPRINT)
-            basicInfo.put("serial", try { 
+            basicInfo.put(getLocalizedKey("manufacturer"), Build.MANUFACTURER)
+            basicInfo.put(getLocalizedKey("model"), Build.MODEL)
+            basicInfo.put(getLocalizedKey("device"), Build.DEVICE)
+            basicInfo.put(getLocalizedKey("product"), Build.PRODUCT)
+            basicInfo.put(getLocalizedKey("brand"), Build.BRAND)
+            basicInfo.put(getLocalizedKey("board"), Build.BOARD)
+            basicInfo.put(getLocalizedKey("hardware"), Build.HARDWARE)
+            basicInfo.put(getLocalizedKey("fingerprint"), Build.FINGERPRINT)
+            basicInfo.put(getLocalizedKey("serial"), try { 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
                         Build.getSerial()
@@ -104,12 +237,12 @@ class DeviceInfoCollector(private val context: Context) {
                     Build.SERIAL
                 }
             } catch (e: Exception) { "Unknown" })
-            basicInfo.put("deviceId", try { Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) } catch (e: Exception) { "Unknown" })
-            basicInfo.put("buildTags", Build.TAGS)
-            basicInfo.put("buildType", Build.TYPE)
-            basicInfo.put("buildUser", Build.USER)
-            basicInfo.put("buildHost", Build.HOST)
-            deviceInfo.put("basic", basicInfo)
+            basicInfo.put(getLocalizedKey("deviceId"), try { Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) } catch (e: Exception) { "Unknown" })
+            basicInfo.put(getLocalizedKey("buildTags"), Build.TAGS)
+            basicInfo.put(getLocalizedKey("buildType"), Build.TYPE)
+            basicInfo.put(getLocalizedKey("buildUser"), Build.USER)
+            basicInfo.put(getLocalizedKey("buildHost"), Build.HOST)
+            deviceInfo.put(getLocalizedCategoryName(CATEGORY_BASIC), basicInfo)
         }
         
         // System information

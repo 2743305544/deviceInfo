@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">设备信息</string>
+
+    <!-- 导航栏 -->
+    <string name="nav_title">设备信息</string>
+    <string name="switch_language">English</string>
+    
+    <!-- 状态文本 -->
+    <string name="status_connected">已连接</string>
+    <string name="status_disconnected">未连接</string>
+    <string name="status_yes">是</string>
+    <string name="status_no">否</string>
+    <string name="status_unknown">未知</string>
+
+    <!-- 分组标题 -->
+    <string name="group_device">设备</string>
+    <string name="group_system">系统</string>
+    <string name="group_kernel">内核</string>
+    <string name="group_radio">基带</string>
+    <string name="group_display">显示</string>
+    <string name="group_memory">内存</string>
+    <string name="group_storage">存储</string>
+    <string name="group_cpu">处理器</string>
+    <string name="group_network">网络</string>
+    <string name="group_battery">电池</string>
+
+    <!-- 导出功能 -->
+    <string name="export_to_downloads">导出到下载目录</string>
+    <string name="choose_save_location">选择保存位置</string>
+    <string name="show_category_selection">选择要导出的类别</string>
+    <string name="hide_category_selection">隐藏类别选择</string>
+    <string name="select_all">全选</string>
+    <string name="deselect_all">取消全选</string>
+    <string name="selected_count">已选择 %1$d / %2$d 项</string>
+    <string name="select_export_categories">选择要导出的信息类别</string>
+
+    <!-- 类别名称 -->
+    <string name="category_basic">基本设备信息</string>
+    <string name="category_system">系统信息</string>
+    <string name="category_kernel">内核信息</string>
+    <string name="category_radio">基带信息</string>
+    <string name="category_screen">屏幕信息</string>
+    <string name="category_memory">内存信息</string>
+    <string name="category_storage">存储信息</string>
+    <string name="category_cpu">CPU信息</string>
+    <string name="category_network">网络信息</string>
+    <string name="category_battery">电池信息</string>
+
+    <!-- 消息提示 -->
+    <string name="file_saved">文件已保存到: %1$s</string>
+    <string name="error_saving_file">保存文件出错: %1$s</string>
+
+    <!-- 设备信息项 -->
+    <!-- 基本信息 -->
+    <string name="info_manufacturer">制造商</string>
+    <string name="info_model">型号</string>
+    <string name="info_device">设备</string>
+    <string name="info_android_version">安卓版本</string>
+    <string name="info_api_level">API 级别</string>
+    <string name="info_product">产品名称</string>
+    <string name="info_brand">品牌</string>
+    <string name="info_board">主板</string>
+    <string name="info_hardware">硬件</string>
+    <string name="info_fingerprint">指纹</string>
+    <string name="info_serial">序列号</string>
+    <string name="info_android_id">Android ID</string>
+    <string name="info_build_tags">构建标签</string>
+    <string name="info_build_type">构建类型</string>
+    <string name="info_build_user">构建用户</string>
+    <string name="info_build_host">构建主机</string>
+
+    <!-- 系统信息 -->
+    <string name="info_os_version">操作系统版本</string>
+    <string name="info_sdk_version">SDK 版本</string>
+    <string name="info_security_patch">安全补丁级别</string>
+    <string name="info_bootloader">引导加载程序</string>
+    <string name="info_build_id">构建ID</string>
+    <string name="info_java_vm">Java虚拟机</string>
+    <string name="info_opengl_es">OpenGL ES 版本</string>
+    <string name="info_uptime">系统运行时间</string>
+    <string name="info_root_status">Root状态</string>
+    <string name="info_selinux_status">SELinux状态</string>
+
+    <!-- 内核信息 -->
+    <string name="info_kernel_version">内核版本</string>
+    <string name="info_kernel_architecture">内核架构</string>
+
+    <!-- 基带信息 -->
+    <string name="info_imei">IMEI</string>
+    <string name="info_meid">MEID</string>
+    <string name="info_baseband">基带</string>
+    <string name="info_baseband_version">基带版本</string>
+    <string name="info_radio_version">无线电版本</string>
+    <string name="info_sim_operator">SIM卡运营商</string>
+    <string name="info_sim_state">SIM卡状态</string>
+    <string name="info_network_type">网络类型</string>
+    <string name="info_phone_type">电话类型</string>
+    <string name="info_signal_strength">信号强度</string>
+    <string name="info_wifi">Wi-Fi</string>
+    <string name="info_cellular">蜂窝网络</string>
+    <string name="info_connected">已连接</string>
+
+    <!-- 屏幕信息 -->
+    <string name="info_resolution">分辨率</string>
+    <string name="info_density">像素密度</string>
+    <string name="info_refresh_rate">刷新率</string>
+    <string name="info_hdr_support">HDR支持</string>
+
+    <!-- 内存信息 -->
+    <string name="info_total_ram">总内存</string>
+    <string name="info_available_ram">可用内存</string>
+    <string name="info_used_ram">已用内存</string>
+    <string name="info_ram_threshold">内存阈值</string>
+
+    <!-- 存储信息 -->
+    <string name="info_internal_storage">内部存储总空间</string>
+    <string name="info_available_storage">可用存储</string>
+    <string name="info_available_internal_storage">内部存储可用空间</string>
+    <string name="info_external_storage">外部存储总空间</string>
+    <string name="info_available_external_storage">外部存储可用空间</string>
+
+    <!-- CPU信息 -->
+    <string name="info_processor">处理器</string>
+    <string name="info_cpu_architecture">CPU架构</string>
+    <string name="info_cores">核心数</string>
+    <string name="info_cpu_frequency_range">CPU频率范围</string>
+    <string name="info_cpu_governor">CPU调度策略</string>
+    <string name="info_abi">ABI</string>
+    <string name="info_abi_list">ABI列表</string>
+
+    <!-- 网络信息 -->
+    <string name="info_ip_address">IP地址</string>
+    <string name="info_mac_address_wifi">WiFi MAC地址</string>
+    <string name="info_mac_address_bt">蓝牙MAC地址</string>
+    <string name="info_connection">连接状态</string>
+    <string name="info_connection_type">连接类型</string>
+    <string name="info_wifi_ssid">WiFi SSID</string>
+    <string name="info_wifi_bssid">WiFi BSSID</string>
+    <string name="info_wifi_link_speed">WiFi连接速度</string>
+
+    <!-- 电池信息 -->
+    <string name="info_level">电量</string>
+    <string name="info_battery_level">电池电量</string>
+    <string name="info_status">状态</string>
+    <string name="info_battery_status">电池状态</string>
+    <string name="info_battery_health">电池健康</string>
+    <string name="info_battery_technology">电池技术</string>
+    <string name="info_temperature">温度</string>
+    <string name="info_battery_temperature">电池温度</string>
+    <string name="info_battery_voltage">电池电压</string>
+    <string name="info_battery_capacity">电池容量</string>
+    <string name="info_charging_method">充电方式</string>
+    <string name="info_type">类型</string>
+</resources>

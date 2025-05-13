@@ -1,3 +1,154 @@
 <resources>
     <string name="app_name">DeviceInfo</string>
+    
+    <!-- 导航栏 -->
+    <string name="nav_title">Device Info</string>
+    <string name="switch_language">中文</string>
+    
+    <!-- 状态文本 -->
+    <string name="status_connected">Connected</string>
+    <string name="status_disconnected">Disconnected</string>
+    <string name="status_yes">Yes</string>
+    <string name="status_no">No</string>
+    <string name="status_unknown">Unknown</string>
+    
+    <!-- 分组标题 -->
+    <string name="group_device">Device</string>
+    <string name="group_system">System</string>
+    <string name="group_kernel">Kernel</string>
+    <string name="group_radio">Radio</string>
+    <string name="group_display">Display</string>
+    <string name="group_memory">Memory</string>
+    <string name="group_storage">Storage</string>
+    <string name="group_cpu">CPU</string>
+    <string name="group_network">Network</string>
+    <string name="group_battery">Battery</string>
+    
+    <!-- 导出功能 -->
+    <string name="export_to_downloads">Export to Downloads</string>
+    <string name="choose_save_location">Choose Save Location</string>
+    <string name="show_category_selection">Select Categories to Export</string>
+    <string name="hide_category_selection">Hide Category Selection</string>
+    <string name="select_all">Select All</string>
+    <string name="deselect_all">Deselect All</string>
+    <string name="selected_count">Selected %1$d / %2$d items</string>
+    <string name="select_export_categories">Select categories to export</string>
+    
+    <!-- 类别名称 -->
+    <string name="category_basic">Basic Device Info</string>
+    <string name="category_system">System Info</string>
+    <string name="category_kernel">Kernel Info</string>
+    <string name="category_radio">Radio Info</string>
+    <string name="category_screen">Screen Info</string>
+    <string name="category_memory">Memory Info</string>
+    <string name="category_storage">Storage Info</string>
+    <string name="category_cpu">CPU Info</string>
+    <string name="category_network">Network Info</string>
+    <string name="category_battery">Battery Info</string>
+    
+    <!-- 消息提示 -->
+    <string name="file_saved">File saved to: %1$s</string>
+    <string name="error_saving_file">Error saving file: %1$s</string>
+    
+    <!-- Device Info Item Labels -->
+    <!-- Basic Info -->
+    <string name="info_manufacturer">Manufacturer</string>
+    <string name="info_model">Model</string>
+    <string name="info_device">Device</string>
+    <string name="info_android_version">Android Version</string>
+    <string name="info_api_level">API Level</string>
+    <string name="info_product">Product</string>
+    <string name="info_brand">Brand</string>
+    <string name="info_board">Board</string>
+    <string name="info_hardware">Hardware</string>
+    <string name="info_fingerprint">Fingerprint</string>
+    <string name="info_serial">Serial</string>
+    <string name="info_android_id">Android ID</string>
+    <string name="info_build_tags">Build Tags</string>
+    <string name="info_build_type">Build Type</string>
+    <string name="info_build_user">Build User</string>
+    <string name="info_build_host">Build Host</string>
+    
+    <!-- System Info -->
+    <string name="info_os_version">OS Version</string>
+    <string name="info_sdk_version">SDK Version</string>
+    <string name="info_security_patch">Security Patch</string>
+    <string name="info_bootloader">Bootloader</string>
+    <string name="info_build_id">Build ID</string>
+    <string name="info_java_vm">Java VM</string>
+    <string name="info_opengl_es">OpenGL ES</string>
+    <string name="info_uptime">Uptime</string>
+    <string name="info_root_status">Root Status</string>
+    <string name="info_selinux_status">SELinux Status</string>
+    
+    <!-- Kernel Info -->
+    <string name="info_kernel_version">Kernel Version</string>
+    <string name="info_kernel_architecture">Kernel Architecture</string>
+    
+    <!-- Radio Info -->
+    <string name="info_imei">IMEI</string>
+    <string name="info_meid">MEID</string>
+    <string name="info_baseband">Baseband</string>
+    <string name="info_baseband_version">Baseband Version</string>
+    <string name="info_radio_version">Radio Version</string>
+    <string name="info_sim_operator">SIM Operator</string>
+    <string name="info_sim_state">SIM State</string>
+    <string name="info_network_type">Network Type</string>
+    <string name="info_phone_type">Phone Type</string>
+    <string name="info_signal_strength">Signal Strength</string>
+    <string name="info_wifi">Wi-Fi</string>
+    <string name="info_cellular">Cellular</string>
+    <string name="info_connected">Connected</string>
+    
+    <!-- Screen Info -->
+    <string name="info_resolution">Resolution</string>
+    <string name="info_density">Density</string>
+    <string name="info_refresh_rate">Refresh Rate</string>
+    <string name="info_hdr_support">HDR Support</string>
+    
+    <!-- Memory Info -->
+    <string name="info_total_ram">Total RAM</string>
+    <string name="info_available_ram">Available RAM</string>
+    <string name="info_used_ram">Used RAM</string>
+    <string name="info_ram_threshold">RAM Threshold</string>
+    
+    <!-- Storage Info -->
+    <string name="info_internal_storage">Internal Storage</string>
+    <string name="info_available_storage">Available Storage</string>
+    <string name="info_available_internal_storage">Available Internal Storage</string>
+    <string name="info_external_storage">External Storage</string>
+    <string name="info_available_external_storage">Available External Storage</string>
+    
+    <!-- CPU Info -->
+    <string name="info_processor">Processor</string>
+    <string name="info_cpu_architecture">CPU Architecture</string>
+    <string name="info_cores">Cores</string>
+    <string name="info_cpu_frequency_range">CPU Frequency Range</string>
+    <string name="info_cpu_governor">CPU Governor</string>
+    <string name="info_abi">ABI</string>
+    <string name="info_abi_list">ABI List</string>
+    
+    <!-- Network Info -->
+    <string name="info_ip_address">IP Address</string>
+    <string name="info_mac_address_wifi">WiFi MAC Address</string>
+    <string name="info_mac_address_bt">Bluetooth MAC Address</string>
+    <string name="info_connection">Connection</string>
+    <string name="info_connection_type">Connection Type</string>
+    <string name="info_wifi_ssid">WiFi SSID</string>
+    <string name="info_wifi_bssid">WiFi BSSID</string>
+    <string name="info_wifi_link_speed">WiFi Link Speed</string>
+    
+    <!-- Battery Info -->
+    <string name="info_level">Level</string>
+    <string name="info_battery_level">Battery Level</string>
+    <string name="info_status">Status</string>
+    <string name="info_battery_status">Battery Status</string>
+    <string name="info_battery_health">Battery Health</string>
+    <string name="info_battery_technology">Battery Technology</string>
+    <string name="info_temperature">Temperature</string>
+    <string name="info_battery_temperature">Battery Temperature</string>
+    <string name="info_battery_voltage">Battery Voltage</string>
+    <string name="info_battery_capacity">Battery Capacity</string>
+    <string name="info_charging_method">Charging Method</string>
+    <string name="info_type">Type</string>
 </resources>

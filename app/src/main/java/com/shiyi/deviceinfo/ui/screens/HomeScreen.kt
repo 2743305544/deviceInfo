@@ -1,6 +1,7 @@
 package com.shiyi.deviceinfo.ui.screens
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import android.content.Intent
@@ -46,6 +47,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.shiyi.deviceinfo.R
+import com.shiyi.deviceinfo.utils.LocaleManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -63,7 +67,7 @@ import org.json.JSONObject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
     val context = LocalContext.current
     val deviceInfoCollector = remember { DeviceInfoCollector(context) }
     var deviceInfo by remember { mutableStateOf<JSONObject?>(null) }
@@ -139,9 +143,22 @@ fun HomeScreen() {
         deviceInfo = deviceInfoCollector.collectDeviceInfo()
     }
     
+    // 观察当前语言状态
+    val currentLanguage by LocaleManager.currentLanguage
+    
     Scaffold(
         containerColor = IOSColors.background,
-        topBar = { IOSNavigationBar(title = "Device Info") },
+        topBar = { 
+            IOSNavigationBar(
+                title = stringResource(id = R.string.nav_title),
+                onLanguageToggle = { localeManager.toggleLanguage(activity) },
+                languageButtonText = if (LocaleManager.currentLanguage.value == LocaleManager.LANGUAGE_CHINESE) {
+                    "EN" // Switch to English
+                } else {
+                    "中" // Switch to Chinese
+                }
+            ) 
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
@@ -153,52 +170,53 @@ fun HomeScreen() {
         ) {
             deviceInfo?.let { info ->
                 // Device section
-                IOSGroupHeader(text = "Device")
+                IOSGroupHeader(text = stringResource(id = R.string.group_device))
                 IOSCard {
+                    val basicInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_BASIC) ?: JSONObject()
                     IOSListItem(
-                        title = "Manufacturer",
-                        value = info.optString("manufacturer"),
+                        title = stringResource(id = R.string.info_manufacturer),
+                        value = basicInfo.optString("manufacturer"),
                         icon = Icons.Default.Smartphone
                     )
                     IOSListItem(
-                        title = "Model",
-                        value = info.optString("model"),
+                        title = stringResource(id = R.string.info_model),
+                        value = basicInfo.optString("model"),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Brand",
-                        value = info.optString("brand"),
+                        title = stringResource(id = R.string.info_device),
+                        value = basicInfo.optString("device"),
                         icon = null,
                         showDivider = false
                     )
                 }
                 
                 // System section
-                IOSGroupHeader(text = "System")
+                IOSGroupHeader(text = stringResource(id = R.string.group_system))
                 IOSCard {
-                    val systemInfo = info.optJSONObject("system") ?: JSONObject()
+                    val systemInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_SYSTEM) ?: JSONObject()
                     IOSListItem(
-                        title = "Android Version",
+                        title = stringResource(id = R.string.info_android_version),
                         value = systemInfo.optString("androidVersion"),
                         icon = Icons.Default.Info
                     )
                     IOSListItem(
-                        title = "API Level",
+                        title = stringResource(id = R.string.info_api_level),
                         value = systemInfo.optString("apiLevel"),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Build ID",
+                        title = stringResource(id = R.string.info_build_id),
                         value = systemInfo.optString("buildId"),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Security Patch",
+                        title = stringResource(id = R.string.info_security_patch),
                         value = systemInfo.optString("securityPatch"),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Bootloader",
+                        title = stringResource(id = R.string.info_bootloader),
                         value = systemInfo.optString("bootloader"),
                         icon = null,
                         showDivider = false
@@ -206,55 +224,55 @@ fun HomeScreen() {
                 }
                 
                 // Hardware section
-                IOSGroupHeader(text = "Hardware")
+                IOSGroupHeader(text = stringResource(id = R.string.group_cpu))
                 IOSCard {
                     // CPU info
-                    val cpuInfo = info.optJSONObject("cpu")
+                    val cpuInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_CPU)
                     
                     // 添加 CPU 型号显示
                     IOSListItem(
-                        title = "CPU Model",
+                        title = stringResource(id = R.string.info_processor),
                         value = cpuInfo?.optString("model") ?: "Unknown",
                         icon = Icons.Default.Memory
                     )
                     IOSListItem(
-                        title = "CPU Cores",
+                        title = stringResource(id = R.string.info_cores),
                         value = cpuInfo?.optString("cores") ?: "Unknown",
                         icon = null
                     )
                     IOSListItem(
-                        title = "CPU Architecture",
+                        title = stringResource(id = R.string.info_cpu_architecture),
                         value = cpuInfo?.optString("architecture") ?: "Unknown",
                         icon = null
                     )
                     IOSListItem(
-                        title = "CPU Frequency",
+                        title = stringResource(id = R.string.info_cpu_frequency_range),
                         value = cpuInfo?.optString("maxFrequency") ?: "Unknown",
                         icon = null
                     )
                     
                     // Memory info
-                    val memoryInfo = info.optJSONObject("memory")
+                    val memoryInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_MEMORY)
                     IOSListItem(
-                        title = "Total RAM",
+                        title = stringResource(id = R.string.info_total_ram),
                         value = memoryInfo?.optString("totalRam") ?: "Unknown",
                         icon = null
                     )
                     IOSListItem(
-                        title = "Available RAM",
+                        title = stringResource(id = R.string.info_available_ram),
                         value = memoryInfo?.optString("availableRam") ?: "Unknown",
                         icon = null
                     )
                     
                     // Storage info
-                    val storageInfo = info.optJSONObject("storage")
+                    val storageInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_STORAGE)
                     IOSListItem(
-                        title = "Internal Storage",
+                        title = stringResource(id = R.string.info_internal_storage),
                         value = storageInfo?.optString("internalTotal") ?: "Unknown",
                         icon = Icons.Default.Storage
                     )
                     IOSListItem(
-                        title = "Free Storage",
+                        title = stringResource(id = R.string.info_available_internal_storage),
                         value = storageInfo?.optString("internalFree") ?: "Unknown",
                         icon = null,
                         showDivider = false
@@ -262,16 +280,16 @@ fun HomeScreen() {
                 }
                 
                 // Kernel section
-                IOSGroupHeader(text = "Kernel")
+                IOSGroupHeader(text = stringResource(id = R.string.group_kernel))
                 IOSCard {
-                    val kernelInfo = info.optJSONObject("kernel") ?: JSONObject()
+                    val kernelInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_KERNEL) ?: JSONObject()
                     IOSListItem(
-                        title = "Kernel Version",
+                        title = stringResource(id = R.string.info_kernel_version),
                         value = kernelInfo.optString("version", "Unknown"),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Kernel Architecture",
+                        title = stringResource(id = R.string.info_kernel_architecture),
                         value = kernelInfo.optString("architecture", "Unknown"),
                         icon = null,
                         showDivider = false
@@ -279,16 +297,16 @@ fun HomeScreen() {
                 }
                 
                 // Radio/Baseband section
-                IOSGroupHeader(text = "Baseband")
+                IOSGroupHeader(text = stringResource(id = R.string.group_radio))
                 IOSCard {
-                    val radioInfo = info.optJSONObject("radio") ?: JSONObject()
+                    val radioInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_RADIO) ?: JSONObject()
                     IOSListItem(
-                        title = "Baseband Version",
+                        title = stringResource(id = R.string.info_baseband_version),
                         value = radioInfo.optString("basebandVersion", "Unknown"),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Radio Version",
+                        title = stringResource(id = R.string.info_radio_version),
                         value = radioInfo.optString("radioVersion", "Unknown"),
                         icon = null
                     )
@@ -297,12 +315,12 @@ fun HomeScreen() {
                     val simInfo = radioInfo.optJSONObject("sim")
                     if (simInfo != null) {
                         IOSListItem(
-                            title = "SIM Operator",
+                            title = stringResource(id = R.string.info_sim_operator),
                             value = simInfo.optString("operatorName", "Unknown"),
                             icon = null
                         )
                         IOSListItem(
-                            title = "SIM State",
+                            title = stringResource(id = R.string.info_sim_state),
                             value = simInfo.optString("state", "Unknown"),
                             icon = null,
                             showDivider = false
@@ -311,16 +329,16 @@ fun HomeScreen() {
                 }
                 
                 // Screen section
-                IOSGroupHeader(text = "Display")
+                IOSGroupHeader(text = stringResource(id = R.string.group_display))
                 IOSCard {
-                    val screenInfo = info.optJSONObject("screen")
+                    val screenInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_SCREEN)
                     IOSListItem(
-                        title = "Resolution",
+                        title = stringResource(id = R.string.info_resolution),
                         value = "${screenInfo?.optString("widthPixels") ?: "?"} × ${screenInfo?.optString("heightPixels") ?: "?"}",
                         icon = null
                     )
                     IOSListItem(
-                        title = "Density",
+                        title = stringResource(id = R.string.info_density),
                         value = screenInfo?.optString("densityDpi") ?: "Unknown",
                         icon = null,
                         showDivider = false
@@ -328,30 +346,30 @@ fun HomeScreen() {
                 }
                 
                 // Network section
-                IOSGroupHeader(text = "Network")
+                IOSGroupHeader(text = stringResource(id = R.string.group_network))
                 IOSCard {
-                    val networkInfo = info.optJSONObject("network")
+                    val networkInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_NETWORK)
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         IOSListItem(
-                            title = "Wi-Fi",
-                            value = if (networkInfo?.optBoolean("hasWifi", false) == true) "Connected" else "Disconnected",
+                            title = stringResource(id = R.string.info_wifi),
+                            value = if (networkInfo?.optBoolean("hasWifi", false) == true) stringResource(id = R.string.status_connected) else stringResource(id = R.string.status_disconnected),
                             icon = null
                         )
                         IOSListItem(
-                            title = "Cellular",
-                            value = if (networkInfo?.optBoolean("hasCellular", false) == true) "Connected" else "Disconnected",
+                            title = stringResource(id = R.string.info_cellular),
+                            value = if (networkInfo?.optBoolean("hasCellular", false) == true) stringResource(id = R.string.status_connected) else stringResource(id = R.string.status_disconnected),
                             icon = null,
                             showDivider = false
                         )
                     } else {
                         IOSListItem(
-                            title = "Connected",
-                            value = if (networkInfo?.optBoolean("connected", false) == true) "Yes" else "No",
+                            title = stringResource(id = R.string.info_connected),
+                            value = if (networkInfo?.optBoolean("connected", false) == true) stringResource(id = R.string.status_yes) else stringResource(id = R.string.status_no),
                             icon = null
                         )
                         IOSListItem(
-                            title = "Type",
-                            value = networkInfo?.optString("type") ?: "Unknown",
+                            title = stringResource(id = R.string.info_network_type),
+                            value = networkInfo?.optString("type") ?: stringResource(id = R.string.status_unknown),
                             icon = null,
                             showDivider = false
                         )
@@ -359,21 +377,21 @@ fun HomeScreen() {
                 }
                 
                 // Battery section
-                IOSGroupHeader(text = "Battery")
+                IOSGroupHeader(text = stringResource(id = R.string.group_battery))
                 IOSCard {
-                    val batteryInfo = info.optJSONObject("battery")
+                    val batteryInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_BATTERY)
                     IOSListItem(
-                        title = "Level",
+                        title = stringResource(id = R.string.info_battery_level),
                         value = "${batteryInfo?.optString("level")}%",
                         icon = null
                     )
                     IOSListItem(
-                        title = "Status",
-                        value = batteryInfo?.optString("status") ?: "Unknown",
+                        title = stringResource(id = R.string.info_battery_status),
+                        value = batteryInfo?.optString("status") ?: stringResource(id = R.string.status_unknown),
                         icon = null
                     )
                     IOSListItem(
-                        title = "Temperature",
+                        title = stringResource(id = R.string.info_battery_temperature),
                         value = "${batteryInfo?.optString("temperature")}°C",
                         icon = null,
                         showDivider = false
@@ -384,7 +402,7 @@ fun HomeScreen() {
                 
                 // Export buttons
                 IOSButton(
-                    text = "Export to Downloads",
+                    text = stringResource(id = R.string.export_to_downloads),
                     onClick = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             // For Android 11+, use the Storage Access Framework
@@ -404,7 +422,7 @@ fun HomeScreen() {
                 )
                 
                 IOSButton(
-                    text = "Choose Save Location",
+                    text = stringResource(id = R.string.choose_save_location),
                     onClick = {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                             // For Android 11+, directly launch document creator
@@ -427,7 +445,9 @@ fun HomeScreen() {
                 
                 // 类别选择按钮
                 IOSButton(
-                    text = "${if (showCategorySelection) "隐藏类别选择" else "选择要导出的类别"}",
+                    text = stringResource(
+                        id = if (showCategorySelection) R.string.hide_category_selection else R.string.show_category_selection
+                    ),
                     onClick = { showCategorySelection = !showCategorySelection },
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
@@ -441,7 +461,7 @@ fun HomeScreen() {
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "选择要导出的信息类别",
+                                text = stringResource(id = R.string.select_export_categories),
                                 fontSize = 16.sp,
                                 color = IOSColors.primary
                             )
@@ -455,7 +475,7 @@ fun HomeScreen() {
                                     .padding(vertical = 4.dp)
                             ) {
                                 IOSButton(
-                                    text = "全选",
+                                    text = stringResource(id = R.string.select_all),
                                     onClick = { selectedCategories = DeviceInfoCollector.ALL_CATEGORIES.toSet() },
                                     modifier = Modifier.weight(1f)
                                 )
@@ -463,7 +483,7 @@ fun HomeScreen() {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 
                                 IOSButton(
-                                    text = "取消全选",
+                                    text = stringResource(id = R.string.deselect_all),
                                     onClick = { selectedCategories = emptySet() },
                                     modifier = Modifier.weight(1f)
                                 )
@@ -475,7 +495,7 @@ fun HomeScreen() {
                             
                             // 基本信息
                             CategoryCheckbox(
-                                title = "基本设备信息",
+                                title = stringResource(id = R.string.category_basic),
                                 category = DeviceInfoCollector.CATEGORY_BASIC,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_BASIC),
                                 onCheckedChange = { checked ->
@@ -489,7 +509,7 @@ fun HomeScreen() {
                             
                             // 系统信息
                             CategoryCheckbox(
-                                title = "系统信息",
+                                title = stringResource(id = R.string.category_system),
                                 category = DeviceInfoCollector.CATEGORY_SYSTEM,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_SYSTEM),
                                 onCheckedChange = { checked ->
@@ -503,7 +523,7 @@ fun HomeScreen() {
                             
                             // 内核信息
                             CategoryCheckbox(
-                                title = "内核信息",
+                                title = stringResource(id = R.string.category_kernel),
                                 category = DeviceInfoCollector.CATEGORY_KERNEL,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_KERNEL),
                                 onCheckedChange = { checked ->
@@ -517,7 +537,7 @@ fun HomeScreen() {
                             
                             // 基带信息
                             CategoryCheckbox(
-                                title = "基带信息",
+                                title = stringResource(id = R.string.category_radio),
                                 category = DeviceInfoCollector.CATEGORY_RADIO,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_RADIO),
                                 onCheckedChange = { checked ->
@@ -531,7 +551,7 @@ fun HomeScreen() {
                             
                             // 屏幕信息
                             CategoryCheckbox(
-                                title = "屏幕信息",
+                                title = stringResource(id = R.string.category_screen),
                                 category = DeviceInfoCollector.CATEGORY_SCREEN,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_SCREEN),
                                 onCheckedChange = { checked ->
@@ -545,7 +565,7 @@ fun HomeScreen() {
                             
                             // 内存信息
                             CategoryCheckbox(
-                                title = "内存信息",
+                                title = stringResource(id = R.string.category_memory),
                                 category = DeviceInfoCollector.CATEGORY_MEMORY,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_MEMORY),
                                 onCheckedChange = { checked ->
@@ -559,7 +579,7 @@ fun HomeScreen() {
                             
                             // 存储信息
                             CategoryCheckbox(
-                                title = "存储信息",
+                                title = stringResource(id = R.string.category_storage),
                                 category = DeviceInfoCollector.CATEGORY_STORAGE,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_STORAGE),
                                 onCheckedChange = { checked ->
@@ -573,7 +593,7 @@ fun HomeScreen() {
                             
                             // CPU信息
                             CategoryCheckbox(
-                                title = "CPU信息",
+                                title = stringResource(id = R.string.category_cpu),
                                 category = DeviceInfoCollector.CATEGORY_CPU,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_CPU),
                                 onCheckedChange = { checked ->
@@ -587,7 +607,7 @@ fun HomeScreen() {
                             
                             // 网络信息
                             CategoryCheckbox(
-                                title = "网络信息",
+                                title = stringResource(id = R.string.category_network),
                                 category = DeviceInfoCollector.CATEGORY_NETWORK,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_NETWORK),
                                 onCheckedChange = { checked ->
@@ -601,7 +621,7 @@ fun HomeScreen() {
                             
                             // 电池信息
                             CategoryCheckbox(
-                                title = "电池信息",
+                                title = stringResource(id = R.string.category_battery),
                                 category = DeviceInfoCollector.CATEGORY_BATTERY,
                                 isSelected = selectedCategories.contains(DeviceInfoCollector.CATEGORY_BATTERY),
                                 onCheckedChange = { checked ->
@@ -615,7 +635,11 @@ fun HomeScreen() {
                             
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "已选择 ${selectedCategories.size} / ${DeviceInfoCollector.ALL_CATEGORIES.size} 项",
+                                text = stringResource(
+                                    id = R.string.selected_count,
+                                    selectedCategories.size,
+                                    DeviceInfoCollector.ALL_CATEGORIES.size
+                                ),
                                 fontSize = 14.sp,
                                 color = IOSColors.gray,
                                 modifier = Modifier.fillMaxWidth()
