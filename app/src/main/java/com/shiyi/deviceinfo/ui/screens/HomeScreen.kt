@@ -62,6 +62,7 @@ import com.shiyi.deviceinfo.ui.components.IOSGroupHeader
 import com.shiyi.deviceinfo.ui.components.IOSListItem
 import com.shiyi.deviceinfo.ui.components.IOSNavigationBar
 import com.shiyi.deviceinfo.utils.DeviceInfoCollector
+import com.shiyi.deviceinfo.utils.LocaleManager.Companion.currentLanguage
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -143,6 +144,11 @@ fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
         deviceInfo = deviceInfoCollector.collectDeviceInfo()
     }
     
+    // 当语言变化时重新收集设备信息
+    LaunchedEffect(currentLanguage) {
+        deviceInfo = deviceInfoCollector.collectDeviceInfo()
+    }
+    
     // 观察当前语言状态
     val currentLanguage by LocaleManager.currentLanguage
     
@@ -174,7 +180,18 @@ fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
                 // Device section
                 IOSGroupHeader(text = stringResource(id = R.string.group_device))
                 IOSCard {
-                    val basicInfo = info.optJSONObject(DeviceInfoCollector.CATEGORY_BASIC) ?: JSONObject()
+                    // 获取当前语言环境下的类别名称
+                    val categoryBasicName = stringResource(id = R.string.category_basic)
+                    // 尝试使用本地化的类别名称获取数据，如果失败则尝试使用英文类别名称
+                    val basicInfo = info.optJSONObject(categoryBasicName) 
+                        ?: info.optJSONObject("Basic Device Info")
+                        ?: JSONObject()
+                    
+                    // 调试日志
+                    Log.d("DeviceInfo", "当前语言: ${LocaleManager.currentLanguage.value}")
+                    Log.d("DeviceInfo", "类别名称: $categoryBasicName")
+                    Log.d("DeviceInfo", "基本信息对象: ${basicInfo.toString()}")
+                    
                     IOSListItem(
                         title = stringResource(id = R.string.info_manufacturer),
                         value = basicInfo.optString("manufacturer"),

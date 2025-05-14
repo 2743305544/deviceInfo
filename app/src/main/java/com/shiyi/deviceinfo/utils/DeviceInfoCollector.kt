@@ -217,14 +217,16 @@ class DeviceInfoCollector(private val context: Context) {
         // Basic device information
         if (categories.contains(CATEGORY_BASIC)) {
             val basicInfo = JSONObject()
-            basicInfo.put(getLocalizedKey("manufacturer"), Build.MANUFACTURER)
-            basicInfo.put(getLocalizedKey("model"), Build.MODEL)
-            basicInfo.put(getLocalizedKey("device"), Build.DEVICE)
-            basicInfo.put(getLocalizedKey("product"), Build.PRODUCT)
-            basicInfo.put(getLocalizedKey("brand"), Build.BRAND)
-            basicInfo.put(getLocalizedKey("board"), Build.BOARD)
-            basicInfo.put(getLocalizedKey("hardware"), Build.HARDWARE)
-            basicInfo.put(getLocalizedKey("fingerprint"), Build.FINGERPRINT)
+            // 对于基本信息，同时存储原始键名和本地化键名
+            // 原始键名用于UI显示，本地化键名用于导出
+            basicInfo.put("manufacturer", Build.MANUFACTURER)
+            basicInfo.put("model", Build.MODEL)
+            basicInfo.put("device", Build.DEVICE)
+            basicInfo.put("product", Build.PRODUCT)
+            basicInfo.put("brand", Build.BRAND)
+            basicInfo.put("board", Build.BOARD)
+            basicInfo.put("hardware", Build.HARDWARE)
+            basicInfo.put("fingerprint", Build.FINGERPRINT)
             basicInfo.put(getLocalizedKey("serial"), try { 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     if (context.checkSelfPermission(android.Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
