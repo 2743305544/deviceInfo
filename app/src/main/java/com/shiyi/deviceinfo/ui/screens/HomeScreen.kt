@@ -9,6 +9,8 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.util.Log
+import androidx.core.content.FileProvider
+import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -152,6 +154,47 @@ fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
     // 观察当前语言状态
     val currentLanguage by LocaleManager.currentLanguage
     
+    // 分享设备信息的函数 - 非Composable函数
+    fun shareDeviceInfo() {
+        if (deviceInfo == null) return
+        
+        try {
+            // 创建临时JSON文件
+            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val fileName = "device_info_$timestamp.json"
+            val cacheDir = context.cacheDir
+            val tempFile = File(cacheDir, fileName)
+            
+            // 写入JSON数据
+            tempFile.writeText(deviceInfo!!.toString(4))
+            
+            // 获取文件URI
+            val fileUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                tempFile
+            )
+            
+            // 创建分享 Intent
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, fileUri)
+                putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.app_name))
+                putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_message))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            
+            // 启动分享对话框
+            val chooserIntent = Intent.createChooser(shareIntent, context.getString(R.string.share_title))
+            context.startActivity(chooserIntent)
+        } catch (e: Exception) {
+            Log.e("DeviceInfo", "Error sharing device info: ${e.message}", e)
+            scope.launch {
+                snackbarHostState.showSnackbar("Error sharing file: ${e.message}")
+            }
+        }
+    }
+    
     Scaffold(
         containerColor = IOSColors.background,
         topBar = { 
@@ -162,7 +205,8 @@ fun HomeScreen(localeManager: LocaleManager, activity: Activity) {
                     "EN" // Switch to English
                 } else {
                     "中" // Switch to Chinese
-                }
+                },
+                onShareClick = { shareDeviceInfo() }
             ) 
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

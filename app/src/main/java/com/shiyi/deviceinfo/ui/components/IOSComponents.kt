@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -164,7 +165,8 @@ fun IOSButton(
 fun IOSNavigationBar(
     title: String,
     onLanguageToggle: (() -> Unit)? = null,
-    languageButtonText: String? = null
+    languageButtonText: String? = null,
+    onShareClick: (() -> Unit)? = null
 ) {
     Surface(
         color = IOSColors.cardBackground,
@@ -189,6 +191,22 @@ fun IOSNavigationBar(
                         fontSize = 14.sp,
                         color = IOSColors.primary,
                         fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
+            // 分享按钮，如果提供了回调函数
+            if (onShareClick != null) {
+                androidx.compose.material3.IconButton(
+                    onClick = onShareClick,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = IOSColors.primary
                     )
                 }
             }

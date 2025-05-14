@@ -151,4 +151,8 @@
     <string name="info_battery_capacity">Battery Capacity</string>
     <string name="info_charging_method">Charging Method</string>
     <string name="info_type">Type</string>
+    
+    <!-- Share feature -->
+    <string name="share_title">Share Device Info</string>
+    <string name="share_message">My device information</string>
 </resources>

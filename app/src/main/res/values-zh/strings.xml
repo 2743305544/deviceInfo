@@ -152,4 +152,8 @@
     <string name="info_battery_capacity">电池容量</string>
     <string name="info_charging_method">充电方式</string>
     <string name="info_type">类型</string>
+    
+    <!-- 分享功能 -->
+    <string name="share_title">分享设备信息</string>
+    <string name="share_message">我的设备信息</string>
 </resources>
